@@ -499,7 +499,7 @@ async function goLandscape(){
 async function startCam(n){
   const msg = $('msg');
   if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){ msg.textContent = '카메라는 https 주소에서만 켜져요.'; return; }
-  initAudio(); goLandscape();
+  initAudio();   // ask for the camera before going fullscreen: some browsers (e.g. Whale) drop the permission prompt otherwise
   if(!video.srcObject){
     msg.textContent = '카메라를 켜는 중…';
     try{
@@ -515,6 +515,7 @@ async function startCam(n){
     }
     loadPose().catch(() => { S.poseErr = true; });
   }
+  goLandscape();
   msg.textContent = ''; S.mode = 'cam'; S.n = n; startGame();
 }
 $('start1').onclick = () => startCam(1);

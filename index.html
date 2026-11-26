@@ -181,9 +181,9 @@ function gesture(p){
 }
 
 /* ---------- layout ---------- */
-const truckL = () => Math.min(W*0.2, H*0.56);     // truck length, side view
+const truckL = () => Math.min(W*0.28, H*0.8);     // truck length, side view
 const truckW = () => truckL()*0.55;                   // size unit for prompts and boarding
-const WIN_X = 0.79, WIN_Y = 0.21, WIN_S = 0.22;       // face window centre and size, in truck lengths from the rear/roof
+const WIN_X = 0.79, WIN_Y = 0.22, WIN_S = 0.26;       // face window centre and size, in truck lengths from the rear/roof
 // trucks always park on the half opposite the fire, nose toward it; returns each truck's window x
 // trucks park on the half opposite the fire, side by side without overlapping, pushed toward the screen edge;
 // 1P stays on the left and 2P on the right, so the outer truck is 1P when they're on the left and 2P when on the right

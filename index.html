@@ -407,16 +407,15 @@ function spray(tr, dt){
   const spots = fireSpots(), tgt = spots[Math.floor(Math.random()*spots.length)], T = 0.55, g = H*1.2;
   for(let i=0;i<5;i++){
     const tx = tgt.x + (Math.random()-0.5)*H*0.08, ty = tgt.y + (Math.random()-0.5)*H*0.06;
-    S.parts.push({ x:n.x, y:n.y, vx:(tx-n.x)/T, vy:(ty-n.y)/T - 0.5*g*T, g, life:T*1.15, r:(4+Math.random()*6)*DPR });
+    S.parts.push({ col: tr.i===1 ? 'rgba(255,255,255,.92)' : 'rgba(140,225,255,.85)', x:n.x, y:n.y, vx:(tx-n.x)/T, vy:(ty-n.y)/T - 0.5*g*T, g, life:T*1.15, r:(4+Math.random()*6)*DPR });
   }
   S.obj.contrib[tr.i] += dt;
   S.obj.hp = Math.max(0, S.obj.hp - dt/SPRAY_TIME);
   if(Math.random()<0.35) S.steam.push({ x:tgt.x+(Math.random()-0.5)*H*0.1, y:tgt.y, vy:-H*0.15, life:1, r:H*0.04 });
 }
 function drawParts(dt){
-  cx.fillStyle='rgba(140,225,255,.85)';
   S.parts = S.parts.filter(q => { q.vy += q.g*dt; q.x += q.vx*dt; q.y += q.vy*dt; q.life -= dt; if(q.life<=0) return false;
-    cx.beginPath(); cx.arc(q.x,q.y,q.r,0,7); cx.fill(); return true; });
+    cx.fillStyle = q.col; cx.beginPath(); cx.arc(q.x,q.y,q.r,0,7); cx.fill(); return true; });
   S.steam = S.steam.filter(s => { s.y += s.vy*dt; s.r *= 1+dt*0.8; s.life -= dt*1.1; if(s.life<=0) return false;
     cx.fillStyle=`rgba(230,235,240,${s.life*0.35})`; cx.beginPath(); cx.arc(s.x,s.y,s.r,0,7); cx.fill(); return true; });
   S.confetti = S.confetti.filter(c => { c.vy += H*0.4*dt; c.x += c.vx*dt; c.y += c.vy*dt; c.a += c.va*dt; if(c.y>H+20) return false;

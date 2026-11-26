@@ -75,10 +75,10 @@ h1{font:clamp(34px,6vw,50px)/1.05 "Black Han Sans",sans-serif;margin:14px 0 6px;
     <div>
       <ol class="steps">
         <li><span>1</span>왼쪽이나 오른쪽에 불난 자동차, 집, 나무가 나타나요.</li>
-        <li><span>2</span>삐용삐용! 소방차가 출동해요. (최대 2명)</li>
+        <li><span>2</span>삐용삐용! 불 반대편에 소방차가 출동해요. (최대 2명)</li>
         <li><span>3</span>내 소방차로 걸어가 얼굴을 파란 창문에 넣어요.</li>
-        <li><span>4</span>노란 포인트를 따라 손을 위로 또는 앞으로! 물대포 발사!</li>
-        <li><span>5</span>물을 더 많이 쏜 사람이 1점. 5점 먼저 내면 승리!</li>
+        <li><span>4</span>라운드마다 정해진 손 동작(위로 또는 앞으로)을 하면 물대포 발사!</li>
+        <li><span>5</span>불은 모두 5번! 매번 물을 더 많이 쏜 사람이 1점, 점수가 높은 사람이 승리!</li>
       </ol>
       <div class="btns">
         <button class="btn" id="start1">혼자 하기</button>
@@ -107,7 +107,7 @@ let W = 0, H = 0, DPR = 1;
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = cv.width = Math.round(innerWidth*DPR); H = cv.height = Math.round(innerHeight*DPR); }
 addEventListener('resize', resize); resize();
 
-const WIN = 5, SPRAY_TIME = 5;            // seconds of one player's water to put out a fire
+const ROUNDS = 5, SPRAY_TIME = 5;          // 5 burning objects per game; seconds of one player's water to put out a fire
 const COLORS = ['#2f8fff', '#2fd16b'];
 const KINDS = ['car', 'house', 'tree'];
 const S = { mode:null, n:1, phase:'idle', phaseT:0, scores:[0,0], roundNo:0, obj:null, trucks:[], poses:[], posesAt:-1e9,
@@ -175,21 +175,27 @@ function gesture(p){
 }
 
 /* ---------- layout ---------- */
-const truckW = () => Math.min(W*0.22, H*0.42);
+const truckL = () => Math.min(W*0.23, H*0.62);     // truck length, side view
+const truckW = () => truckL()*0.55;                   // size unit for prompts and boarding
+const WIN_X = 0.79, WIN_Y = 0.21, WIN_S = 0.22;       // face window centre and size, in truck lengths from the rear/roof
+// trucks always park on the half opposite the fire, nose toward it; returns each truck's window x
 function truckXs(side, n){
-  if(side==='L') return n===1 ? [0.62] : [0.5, 0.8];
-  return n===1 ? [0.38] : [0.2, 0.5];
+  const L = truckL(), gap = W*0.015, front = 1-WIN_X;
+  const starts = n===1 ? [ (side==='L' ? 0.75 : 0.25)*W - L/2 ]
+    : side==='L' ? [0.52*W, 0.52*W + L + gap] : [0.48*W - 2*L - gap, 0.48*W - L];
+  return starts.map(st => side==='L' ? st + front*L : st + WIN_X*L);
 }
 function newRound(){
   S.roundNo++;
   const side = Math.random()<0.5 ? 'L' : 'R';
   let kind; do{ kind = KINDS[Math.floor(Math.random()*3)]; } while(kind===S.lastKind);
   S.lastKind = kind;
-  S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99 };
+  S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99, prompt: S.lastPrompt==='up' ? 'fwd' : S.lastPrompt==='fwd' ? 'up' : (Math.random()<0.5 ? 'up' : 'fwd') };
+  S.lastPrompt = S.obj.prompt;
   const xs = truckXs(side, S.n);
-  S.trucks = xs.map((fx,i) => ({ i, x:fx*W, fx, y:H*0.42, board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }));
+  S.trucks = xs.map((x,i) => ({ i, x, y:H*0.42, board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }));
   S.phase = 'intro'; S.phaseT = 1.4;
-  $('roundTxt').textContent = S.roundNo + '라운드';
+  $('roundTxt').textContent = `${S.roundNo} / ${ROUNDS} 라운드`;
   showBanner(kind==='car' ? '자동차에 불이 났어요!' : kind==='house' ? '집에 불이 났어요!' : '나무에 불이 났어요!', 1300);
   setTimeout(siren, 350);
 }
@@ -251,28 +257,56 @@ function drawObject(t){
 }
 function drawTruck(tr, now){
   const k = Math.max(0, Math.min(1,(now-tr.born)/400)); if(k<=0) return;
-  const sc = 1-(1-k)**3, bw = truckW()*sc, bh = bw*0.8, x = tr.x - bw/2, top = tr.y - bh/2, lw = Math.max(3*DPR, bw*0.035);
-  const face = S.obj.side==='L' ? -1 : 1; // side facing the fire gets the hoses, the wheel goes on the other side
-  const bounce = S.phase==='victory' && tr.i===S.winner ? Math.abs(Math.sin(now/160))*bh*0.18 : 0;
-  const ws = bw*0.42;
-  cx.save(); cx.translate(0,-bounce); cx.globalAlpha = tr.board ? 0.97 : 0.6; cx.lineJoin='round';
-  cx.fillStyle='#e3261c'; cx.strokeStyle='#a3150d'; cx.lineWidth = lw;
-  const bx = face<0 ? x+bw*0.48 : x+bw*0.02;
-  cx.beginPath(); cx.rect(bx, top+bh, bw*0.5, bh*0.55); cx.fill(); cx.stroke();
-  cx.beginPath(); cx.rect(x, top, bw, bh); cx.rect(tr.x+ws/2, tr.y-ws/2, -ws, ws); cx.fill('evenodd'); cx.stroke();
-  cx.strokeStyle = COLORS[tr.i]; cx.lineWidth = lw*1.6; cx.strokeRect(tr.x-ws/2, tr.y-ws/2, ws, ws);
-  if(!tr.board){ cx.fillStyle='rgba(47,143,255,.55)'; cx.fillRect(tr.x-ws/2, tr.y-ws/2, ws, ws); }
-  const wr = bw*0.16, wx = face<0 ? x+bw : x;
-  cx.fillStyle='#16161a'; cx.beginPath(); cx.arc(wx, top+bh*0.55, wr, 0, 7); cx.fill();
-  cx.fillStyle='#bfc6cc'; cx.beginPath(); cx.arc(wx, top+bh*0.55, wr*0.42, 0, 7); cx.fill();
-  cx.strokeStyle='#ff3b30'; cx.lineWidth = lw*1.4;
-  const hx = face<0 ? x - wr*0.45 : x+bw+wr*0.45;
-  for(const f of [0.4,0.68]){ cx.beginPath(); cx.ellipse(hx, top+bh*f, wr*0.55, wr*0.7, 0, 0, 7); cx.stroke(); }
-  cx.fillStyle = COLORS[tr.i]; cx.font = `${Math.round(bw*0.16)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
-  cx.fillText((tr.i+1)+'P', tr.x, top+bh*0.9);
+  const L = truckL()*(1-(1-k)**3), dir = S.obj.side==='L' ? -1 : 1;   // nose points at the fire
+  const bounce = S.phase==='victory' && tr.i===S.winner ? Math.abs(Math.sin(now/160))*L*0.08 : 0;
+  // local frame: x 0 = rear, 1 = nose; y 0 = roof line, 0.56 = ground; unit = L
+  const ox = tr.x - dir*WIN_X*L, oy = tr.y - WIN_Y*L - bounce;
+  const X = u => ox + dir*u*L, Y = v => oy + v*L;
+  const poly = (pts, fill) => { cx.beginPath(); pts.forEach(([u,v],i) => i ? cx.lineTo(X(u),Y(v)) : cx.moveTo(X(u),Y(v))); cx.closePath(); cx.fillStyle = fill; cx.fill(); };
+  const box = (u0,v0,u1,v1, fill) => poly([[u0,v0],[u1,v0],[u1,v1],[u0,v1]], fill);
+  const ws = WIN_S*L;
+  cx.save(); cx.globalAlpha = tr.board ? 0.97 : 0.6; cx.lineJoin = 'round';
+  cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(X(0.5), Y(0.57), L*0.52, L*0.03, 0, 0, 7); cx.fill();
+  // roof rail and turret
+  cx.strokeStyle = '#9aa3ab'; cx.lineWidth = L*0.012; cx.beginPath(); cx.moveTo(X(0.08),Y(0.02)); cx.lineTo(X(0.58),Y(0.02)); cx.stroke();
+  box(0.84,-0.02,0.94,0.04,'#5b6168');
+  cx.strokeStyle = '#3d4247'; cx.lineWidth = L*0.035; cx.lineCap = 'round';
+  cx.beginPath(); cx.moveTo(X(0.89),Y(-0.01)); cx.lineTo(X(1.08),Y(-0.07)); cx.stroke();
+  cx.fillStyle = '#c9d0d6'; cx.beginPath(); cx.arc(X(1.09),Y(-0.075),L*0.022,0,7); cx.fill();
+  // light bar
+  const blink = Math.floor(now/180)%2;
+  box(0.66,-0.015,0.73,0.035, blink ? '#ff2a2a' : '#7a1010'); box(0.73,-0.015,0.8,0.035, blink ? '#123a7a' : '#2a7bff');
+  // rear body: black upper band over red
+  poly([[0.03,0.05],[0.62,0.05],[0.62,0.46],[0.03,0.46]], '#e3261c');
+  box(0.03,0.05,0.62,0.15,'#1d1d24');
+  // cab with slanted nose and the face window cut out
+  cx.beginPath();
+  [[0.62,0.04],[0.93,0.04],[1.0,0.17],[1.0,0.46],[0.62,0.46]].forEach(([u,v],i) => i ? cx.lineTo(X(u),Y(v)) : cx.moveTo(X(u),Y(v))); cx.closePath();
+  cx.rect(tr.x - ws/2, Y(WIN_Y) - ws/2, ws, ws);
+  cx.fillStyle = '#e3261c'; cx.fill('evenodd');
+  poly([[0.62,0.04],[0.93,0.04],[0.95,0.08],[0.62,0.08]], '#1d1d24');
+  poly([[0.935,0.06],[0.995,0.18],[0.975,0.24],[0.925,0.1]], '#2b3a4a');        // windshield edge
+  // stripes, door line, bumper
+  cx.fillStyle = '#ffd23f'; box(0.05,0.19,0.6,0.205,'#ffd23f');
+  poly([[0.03,0.29],[0.36,0.29],[0.4,0.25],[0.62,0.25],[0.62,0.28],[0.42,0.28],[0.38,0.32],[0.03,0.32]], '#1d1d24');
+  cx.strokeStyle = '#a3150d'; cx.lineWidth = L*0.006; cx.beginPath(); cx.moveTo(X(0.63),Y(0.34)); cx.lineTo(X(0.63),Y(0.45)); cx.stroke();
+  box(0.97,0.38,1.04,0.46,'#8d959c');
+  box(0.03,0.44,1.0,0.47,'#b5170f');
+  // window frame
+  cx.strokeStyle = COLORS[tr.i]; cx.lineWidth = L*0.018; cx.strokeRect(tr.x - ws/2, Y(WIN_Y) - ws/2, ws, ws);
+  if(!tr.board){ cx.fillStyle = 'rgba(47,143,255,.55)'; cx.fillRect(tr.x - ws/2, Y(WIN_Y) - ws/2, ws, ws); }
+  // three big wheels
+  for(const u of [0.17,0.42,0.82]){
+    cx.fillStyle = '#121216'; cx.beginPath(); cx.arc(X(u), Y(0.47), L*0.095, 0, 7); cx.fill();
+    cx.fillStyle = '#2a2a30'; cx.beginPath(); cx.arc(X(u), Y(0.47), L*0.06, 0, 7); cx.fill();
+    cx.fillStyle = '#9aa3ab'; cx.beginPath(); cx.arc(X(u), Y(0.47), L*0.03, 0, 7); cx.fill();
+  }
   cx.restore();
-  tr.nozzle = { x:hx, y:top+bh*0.4-bounce };
-  if(!tr.board && S.phase!=='victory') label('얼굴을 창문에!', tr.x, top-bh*0.18, bw*0.13, '#fff');
+  cx.fillStyle = COLORS[tr.i]; cx.font = `${Math.round(L*0.09)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText((tr.i+1)+'P', X(0.32), Y(0.39));
+  tr.nozzle = { x:X(1.09), y:Y(-0.075) };
+  tr.mid = X(0.5);
+  if(!tr.board && S.phase!=='victory') label('얼굴을 창문에!', tr.x, Y(WIN_Y) - ws*0.9, L*0.07, '#fff');
 }
 function label(txt, x, y, size, col){
   cx.font = `${Math.round(size)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
@@ -334,20 +368,19 @@ function frame(now){
     const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1a0d0a'); g.addColorStop(1,'#5a1608'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
   }
   assign();
-  for(const tr of S.trucks){ const ty = tr.board && tr.pose ? tr.pose.nose.y : H*0.42; tr.y += (Math.max(truckW()*0.45, Math.min(H*0.62, ty)) - tr.y)*Math.min(1, dt*12); tr.spraying = false; }
+  for(const tr of S.trucks){ const ty = tr.board && tr.pose ? tr.pose.nose.y : H*0.42; tr.y += (Math.max(truckL()*0.32 + 50*DPR, Math.min(H - truckL()*0.4, ty)) - tr.y)*Math.min(1, dt*12); tr.spraying = false; }
   S.phaseT -= dt;
   if(S.phase==='intro' && S.phaseT<=0) S.phase = 'play';
   if(S.phase==='play'){
     for(const tr of S.trucks){
       if(!tr.board){ tr.prompt = null; continue; }
-      tr.promptT -= dt;
-      if(!tr.prompt || tr.promptT<=0){ tr.prompt = tr.prompt==='up' ? 'fwd' : tr.prompt==='fwd' ? 'up' : (Math.random()<0.5?'up':'fwd'); tr.promptT = 3.5 + Math.random()*2; }
-      const hit = S.mode==='touch' ? !!S.pointer && Math.abs(S.pointer.x - tr.x) < truckW()*0.6 : gesture(tr.pose) === tr.prompt;
+      tr.prompt = S.obj.prompt;   // one hand pose for the whole round
+      const hit = S.mode==='touch' ? !!S.pointer && Math.abs(S.pointer.x - (tr.mid ?? tr.x)) < truckL()*0.5 : gesture(tr.pose) === tr.prompt;
       if(hit){ tr.spraying = true; spray(tr, dt); }
     }
     if(S.obj.hp<=0) roundOver();
   }
-  if(S.phase==='out' && S.phaseT<=0){ if(Math.max(...S.scores)>=WIN) victory(); else newRound(); }
+  if(S.phase==='out' && S.phaseT<=0){ if(S.roundNo>=ROUNDS) victory(); else newRound(); }
   if(S.phase==='victory'){
     if(Math.random()<0.6) for(let i=0;i<3;i++) S.confetti.push({ x:Math.random()*W, y:-10, vx:(Math.random()-0.5)*W*0.1, vy:Math.random()*H*0.2, a:0, va:(Math.random()-0.5)*10, s:(8+Math.random()*8)*DPR, col:['#ffd23f','#e3261c','#2f8fff','#2fd16b','#fff'][i%5] });
     if(S.phaseT<=0) return endGame();
@@ -357,7 +390,7 @@ function frame(now){
   for(const tr of S.trucks) drawTruck(tr, now);
   drawParts(dt);
   if(S.phase==='play') for(const tr of S.trucks) drawPrompt(tr, now);
-  if(S.phase==='victory'){ const w = S.trucks[S.winner]; if(w){ const s = truckW(); drawCrown(w.x, w.y - s*0.42 - Math.abs(Math.sin(now/160))*s*0.18 - s*0.05, s*0.45); } }
+  if(S.phase==='victory'){ const w = S.trucks[S.winner]; if(w){ const s = truckW(); drawCrown(w.x, w.y - truckL()*0.14 - Math.abs(Math.sin(now/160))*truckL()*0.08, s*0.45); } }
   let h;
   if(S.mode==='cam' && S.poseErr) h = '움직임 인식을 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.';
   else if(S.mode==='cam' && !landmarker) h = '움직임 인식 준비 중…';
@@ -380,15 +413,15 @@ function roundOver(){
   S.phase = 'out'; S.phaseT = 2.2; S.trucks.forEach(t => t.prompt = null);
 }
 function victory(){
-  S.winner = S.scores[0] >= S.scores[1] ? 0 : 1;
+  S.winner = S.scores[1] > S.scores[0] ? 1 : 0;
   S.phase = 'victory'; S.phaseT = 5;
-  showBanner(S.n===2 ? `${S.winner+1}P 승리!` : '화재 진압 성공!', 4800); fanfare(); setTimeout(fanfare, 1100);
+  showBanner(S.n===2 ? `${S.winner+1}P 승리!` : '5번 모두 진압!', 4800); fanfare(); setTimeout(fanfare, 1100);
 }
 function renderPips(){
-  for(let p=0;p<2;p++) $('pips'+p).innerHTML = Array.from({length:WIN}, (_,i) => `<i class="${i<S.scores[p]?'on':''}"></i>`).join('');
+  for(let p=0;p<2;p++) $('pips'+p).innerHTML = Array.from({length:ROUNDS}, (_,i) => `<i class="${i<S.scores[p]?'on':''}"></i>`).join('');
 }
 function startGame(){
-  Object.assign(S, { scores:[0,0], roundNo:0, parts:[], steam:[], confetti:[], hint:'', winner:-1, lastKind:'' });
+  Object.assign(S, { scores:[0,0], roundNo:0, parts:[], steam:[], confetti:[], hint:'', winner:-1, lastKind:'', lastPrompt:'' });
   renderPips(); $('pl2').hidden = S.n!==2;
   $('startScreen').hidden = true; $('endScreen').hidden = true; $('hud').hidden = false; $('hint').hidden = false;
   document.body.classList.add('playing');

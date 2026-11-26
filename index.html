@@ -339,6 +339,7 @@ function drawTruck(tr, now){
   // window frame
   cx.strokeStyle = COLORS[tr.i]; cx.lineWidth = L*0.018; cx.strokeRect(tr.x - ws/2, Y(WIN_Y) - ws/2, ws, ws);
   if(!tr.board){ cx.fillStyle = 'rgba(47,143,255,.55)'; cx.fillRect(tr.x - ws/2, Y(WIN_Y) - ws/2, ws, ws); }
+  tr.win = { x:tr.x, y:Y(WIN_Y), s:ws };
   // three big wheels
   for(const u of [0.17,0.42,0.82]){
     cx.fillStyle = '#121216'; cx.beginPath(); cx.arc(X(u), Y(0.47), L*0.095, 0, 7); cx.fill();
@@ -351,6 +352,15 @@ function drawTruck(tr, now){
   tr.nozzle = { x:X(1.09), y:Y(-0.075) };
   tr.mid = X(0.5);
   if(!tr.board && S.phase!=='victory') label('얼굴을 창문에!', tr.x, Y(WIN_Y) - ws*0.9, L*0.07, '#fff');
+}
+// paint the boarded player's own face into their window, so nothing (truck bodies, a neighbour) can ever hide it
+function drawFace(tr){
+  if(S.mode!=='cam' || !tr.board || !tr.pose || !tr.win || video.readyState<2) return;
+  const w = tr.win, c = cover(), dx = w.x - tr.pose.nose.x, dy = w.y - tr.pose.nose.y;
+  cx.save(); cx.beginPath(); cx.rect(w.x - w.s/2, w.y - w.s/2, w.s, w.s); cx.clip();
+  cx.translate(dx, dy); cx.translate(W,0); cx.scale(-1,1); cx.drawImage(video, c.ox, c.oy, c.vw*c.s, c.vh*c.s);
+  cx.restore();
+  cx.strokeStyle = COLORS[tr.i]; cx.lineWidth = truckL()*0.018; cx.strokeRect(w.x - w.s/2, w.y - w.s/2, w.s, w.s);
 }
 function label(txt, x, y, size, col, align){
   cx.font = `${Math.round(size)}px "Black Han Sans",sans-serif`; cx.textAlign = align || 'center'; cx.textBaseline='middle';
@@ -446,8 +456,8 @@ function frame(now){
   }
   setWater(S.trucks.some(t => t.spraying));
   drawObject(now/1000);
-  for(const tr of S.trucks.filter(t => !t.behind)) drawTruck(tr, now);   // truck nearer the fire first, the one behind overlaps it
-  for(const tr of S.trucks.filter(t => t.behind)) drawTruck(tr, now);
+  for(const tr of S.trucks) drawTruck(tr, now);
+  for(const tr of S.trucks) drawFace(tr);
   drawParts(dt);
   if(S.phase==='play') for(const tr of S.trucks) drawPrompt(tr, now);
   if(S.phase==='victory'){ const w = S.trucks[S.winner]; if(w){ const s = truckW(); drawCrown(w.x, w.y - truckL()*0.14 - Math.abs(Math.sin(now/160))*truckL()*0.08, s*0.45); } }

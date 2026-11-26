@@ -181,15 +181,17 @@ function gesture(p){
 }
 
 /* ---------- layout ---------- */
-const truckL = () => Math.min(W*0.23, H*0.62);     // truck length, side view
+const truckL = () => Math.min(W*0.2, H*0.56);     // truck length, side view
 const truckW = () => truckL()*0.55;                   // size unit for prompts and boarding
 const WIN_X = 0.79, WIN_Y = 0.21, WIN_S = 0.22;       // face window centre and size, in truck lengths from the rear/roof
 // trucks always park on the half opposite the fire, nose toward it; returns each truck's window x
+// trucks park on the half opposite the fire, side by side without overlapping, pushed toward the screen edge;
+// 1P stays on the left and 2P on the right, so the outer truck is 1P when they're on the left and 2P when on the right
 function truckXs(side, n){
-  const L = truckL(), win = WIN_X*L, step = 0.4*L;   // 0.4L = middle wheel (0.42) of the truck ahead under the front wheel (0.82) of the truck behind
-  if(n===1) return [ (side==='L' ? 0.75 : 0.25)*W + (side==='L' ? -1 : 1)*(win - L/2) ];
-  if(side==='L'){ const w0 = 0.52*W + L - win; return [w0, w0 + step]; }      // facing left: 1P ahead, 2P behind
-  const w1 = 0.48*W - L + win; return [w1 - step, w1];                      // facing right: 2P ahead, 1P behind
+  const L = truckL(), win = WIN_X*L, m = W*0.012, gap = L*0.14;   // gap leaves room for the roof cannon
+  if(n===1) return side==='L' ? [W - m - L*0.15 - win] : [m + L*0.15 + win];
+  if(side==='L'){ const ox1 = W - m, ox0 = ox1 - L - gap; return [ox0 - win, ox1 - win]; }   // facing left, rear at x = ox
+  const ox0 = m, ox1 = m + L + gap; return [ox0 + win, ox1 + win];                          // facing right
 }
 function newRound(){
   S.roundNo++;
@@ -199,7 +201,7 @@ function newRound(){
   S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99, prompt: (() => { const c = ['up','fwd','side'].filter(k => k!==S.lastPrompt); return c[Math.floor(Math.random()*c.length)]; })() };
   S.lastPrompt = S.obj.prompt;
   const xs = truckXs(side, S.n);
-  S.trucks = xs.map((x,i) => { const behind = S.n===2 && (side==='L' ? i===1 : i===0); return { i, x, behind, defY: H*(behind ? 0.34 : 0.44), y:H*(behind ? 0.34 : 0.44), board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }; });
+  S.trucks = xs.map((x,i) => { const behind = false; return { i, x, behind, defY: H*0.42, y:H*0.42, board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }; });
   S.phase = 'intro'; S.phaseT = 1.4;
   $('roundTxt').textContent = `${S.roundNo} / ${ROUNDS} 라운드`;
   showBanner(`${NAMES[kind]}에 불이 났어요!`, 1300);

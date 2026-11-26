@@ -78,7 +78,7 @@ h1{font:clamp(34px,6vw,50px)/1.05 "Black Han Sans",sans-serif;margin:14px 0 6px;
         <li><span>1</span>왼쪽이나 오른쪽에 불난 자동차, 집, 나무가 나타나요.</li>
         <li><span>2</span>삐용삐용! 불 반대편에 소방차가 출동해요. (최대 2명)</li>
         <li><span>3</span>내 소방차로 걸어가 얼굴을 파란 창문에 넣어요.</li>
-        <li><span>4</span>라운드마다 정해진 손 동작(위로 또는 앞으로)을 하면 물대포 발사!</li>
+        <li><span>4</span>라운드마다 그림 속 동작(위로 뻗기, 앞으로 모으기, 양쪽으로 뻗기)을 따라 하면 물대포 발사!</li>
         <li><span>5</span>불은 모두 5번! 매번 물을 더 많이 쏜 사람이 1점, 점수가 높은 사람이 승리!</li>
       </ol>
       <div class="btns">
@@ -173,6 +173,8 @@ function gesture(p){
   const ok = p.lw.v>0.35 && p.rw.v>0.35;
   if(!ok) return null;
   if(p.lw.y < p.nose.y - p.sw*0.3 && p.rw.y < p.nose.y - p.sw*0.3) return 'up';
+  const shY = (p.ls.y+p.rs.y)/2;
+  if(Math.abs(p.lw.x-p.rw.x) > p.sw*2.2 && Math.abs(p.lw.y-shY) < p.sw*0.9 && Math.abs(p.rw.y-shY) < p.sw*0.9) return 'side';
   const gap = Math.hypot(p.lw.x-p.rw.x, p.lw.y-p.rw.y), my = (p.lw.y+p.rw.y)/2;
   if(gap < p.sw*0.75 && my > p.nose.y && my < p.nose.y + p.sw*3) return 'fwd';
   return null;
@@ -194,7 +196,7 @@ function newRound(){
   const side = Math.random()<0.5 ? 'L' : 'R';
   let kind; do{ kind = KINDS[Math.floor(Math.random()*KINDS.length)]; } while(kind===S.lastKind);
   S.lastKind = kind;
-  S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99, prompt: S.lastPrompt==='up' ? 'fwd' : S.lastPrompt==='fwd' ? 'up' : (Math.random()<0.5 ? 'up' : 'fwd') };
+  S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99, prompt: (() => { const c = ['up','fwd','side'].filter(k => k!==S.lastPrompt); return c[Math.floor(Math.random()*c.length)]; })() };
   S.lastPrompt = S.obj.prompt;
   const xs = truckXs(side, S.n);
   S.trucks = xs.map((x,i) => { const behind = S.n===2 && (side==='L' ? i===1 : i===0); return { i, x, behind, defY: H*(behind ? 0.34 : 0.44), y:H*(behind ? 0.34 : 0.44), board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }; });
@@ -348,24 +350,40 @@ function drawTruck(tr, now){
   tr.mid = X(0.5);
   if(!tr.board && S.phase!=='victory') label('얼굴을 창문에!', tr.x, Y(WIN_Y) - ws*0.9, L*0.07, '#fff');
 }
-function label(txt, x, y, size, col){
-  cx.font = `${Math.round(size)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
+function label(txt, x, y, size, col, align){
+  cx.font = `${Math.round(size)}px "Black Han Sans",sans-serif`; cx.textAlign = align || 'center'; cx.textBaseline='middle';
   cx.lineWidth = size*0.22; cx.strokeStyle='#1a0d0a'; cx.strokeText(txt, x, y); cx.fillStyle = col; cx.fillText(txt, x, y);
+}
+const POSE_TEXT = { up:'팔 위로 뻗기!', fwd:'손 앞으로 모으기!', side:'팔 양쪽으로 뻗기!' };
+// small stick figure, about 0.7cm tall (26 CSS px), showing the pose to copy
+function poseIcon(kind, x, y, h){
+  cx.save(); cx.translate(x, y); cx.strokeStyle = '#1a0d0a'; cx.fillStyle = '#1a0d0a'; cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.lineWidth = h*0.09;
+  cx.beginPath(); cx.arc(0, -h*0.36, h*0.11, 0, 7); cx.fill();
+  cx.beginPath(); cx.moveTo(0, -h*0.22); cx.lineTo(0, h*0.12); cx.moveTo(-h*0.13, h*0.48); cx.lineTo(0, h*0.12); cx.lineTo(h*0.13, h*0.48); cx.stroke();
+  cx.beginPath();
+  for(const sx of [-1, 1]){
+    cx.moveTo(sx*h*0.05, -h*0.17);
+    if(kind==='up'){ cx.lineTo(sx*h*0.16, -h*0.38); cx.lineTo(sx*h*0.2, -h*0.56); }
+    else if(kind==='side'){ cx.lineTo(sx*h*0.26, -h*0.17); cx.lineTo(sx*h*0.46, -h*0.17); }
+    else { cx.lineTo(sx*h*0.2, -h*0.04); cx.lineTo(sx*h*0.04, -h*0.04); }
+  }
+  cx.stroke();
+  const hands = kind==='up' ? [[-0.2,-0.56],[0.2,-0.56]] : kind==='side' ? [[-0.46,-0.17],[0.46,-0.17]] : [[-0.035,-0.04],[0.035,-0.04]];
+  cx.fillStyle = '#e3261c'; for(const [hx,hy] of hands){ cx.beginPath(); cx.arc(hx*h, hy*h, h*0.07, 0, 7); cx.fill(); }
+  cx.restore();
 }
 function drawPrompt(tr, now){
   if(!tr.board || !tr.prompt || !tr.pose) return;
-  const p = tr.pose, up = tr.prompt==='up', bw = truckW();
-  const tx = p.nose.x, ty = up ? Math.max(bw*0.3 + 56*DPR, tr.y - bw*0.8) : Math.min(H - bw*0.35, tr.y + bw*0.6);
-  const pulse = 1 + Math.sin(now/150)*0.12, r = bw*0.13*pulse;
+  const p = tr.pose, kind = tr.prompt, bw = truckW(), ih = 26*DPR;
+  const r = ih*0.62*(1 + Math.sin(now/150)*0.08);
+  const tx = p.nose.x, ty = kind==='fwd' ? Math.min(H - r*1.6 - 50*DPR, tr.y + bw*0.6) : Math.max(r*1.6 + 56*DPR, tr.y - bw*0.8);
   cx.save();
-  cx.fillStyle = tr.spraying ? 'rgba(95,208,255,.9)' : 'rgba(255,210,63,.92)';
+  cx.fillStyle = tr.spraying ? 'rgba(95,208,255,.95)' : 'rgba(255,210,63,.95)';
   cx.beginPath(); cx.arc(tx, ty, r, 0, 7); cx.fill();
-  cx.strokeStyle = '#fff'; cx.lineWidth = 3*DPR; cx.beginPath(); cx.arc(tx, ty, r*1.45, 0, 7); cx.stroke();
-  cx.fillStyle = '#1a0d0a'; cx.beginPath();
-  if(up){ cx.moveTo(tx, ty-r*0.6); cx.lineTo(tx+r*0.5, ty+r*0.2); cx.lineTo(tx-r*0.5, ty+r*0.2); }
-  else { cx.arc(tx-r*0.28, ty, r*0.25, 0, 7); cx.arc(tx+r*0.28, ty, r*0.25, 0, 7); }
-  cx.fill(); cx.restore();
-  label(up ? '손 위로!' : '손 앞으로 모아!', tx + bw*0.55, ty, bw*0.12, tr.spraying ? '#5fd0ff' : '#ffd23f');
+  cx.strokeStyle = '#fff'; cx.lineWidth = 3*DPR; cx.beginPath(); cx.arc(tx, ty, r*1.3, 0, 7); cx.stroke();
+  cx.restore();
+  poseIcon(kind, tx, ty, ih);
+  if(S.trucks.length===1) label(POSE_TEXT[kind], tx + r*1.6, ty, Math.max(14*DPR, bw*0.11), tr.spraying ? '#5fd0ff' : '#ffd23f', 'left');
 }
 function drawCrown(x, y, s){
   cx.fillStyle = '#ffd23f'; cx.strokeStyle = '#9e6b00'; cx.lineWidth = s*0.06;
@@ -440,7 +458,7 @@ function frame(now){
     const free = S.trucks.filter(t => !t.board);
     if(S.mode==='cam' && !S.poses.length) h = '몸이 보이게 조금 뒤로 물러나세요';
     else if(free.length) h = (S.n===2 ? free.map(t => (t.i+1)+'P').join(', ')+' ' : '') + '소방차로 가서 얼굴을 파란 창문에 넣어요';
-    else h = S.mode==='touch' ? '소방차를 꾹 누르면 물대포 발사!' : '노란 포인트처럼 손을 움직여 물대포 발사!';
+    else h = S.mode==='touch' ? '소방차를 꾹 누르면 물대포 발사!' : `노란 그림처럼 ${POSE_TEXT[S.obj.prompt]} 물대포 발사!`;
   } else h = '삐용삐용! 소방차 출동!';
   if(h!==S.hint){ S.hint = h; $('hint').textContent = h; }
   requestAnimationFrame(frame);

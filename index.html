@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1a0d0a">
+<meta http-equiv="Cache-Control" content="no-cache">
 <title>출동! 꼬마 소방관</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
@@ -180,7 +181,7 @@ const truckW = () => truckL()*0.55;                   // size unit for prompts a
 const WIN_X = 0.79, WIN_Y = 0.21, WIN_S = 0.22;       // face window centre and size, in truck lengths from the rear/roof
 // trucks always park on the half opposite the fire, nose toward it; returns each truck's window x
 function truckXs(side, n){
-  const L = truckL(), gap = W*0.015, front = 1-WIN_X;
+  const L = truckL(), gap = -L*0.06, front = 1-WIN_X;
   const starts = n===1 ? [ (side==='L' ? 0.75 : 0.25)*W - L/2 ]
     : side==='L' ? [0.52*W, 0.52*W + L + gap] : [0.48*W - 2*L - gap, 0.48*W - L];
   return starts.map(st => side==='L' ? st + front*L : st + WIN_X*L);

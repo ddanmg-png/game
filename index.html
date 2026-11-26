@@ -505,7 +505,14 @@ async function startCam(n){
     try{
       const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
       video.srcObject = stream; await video.play();
-    }catch(e){ msg.textContent = '카메라를 쓸 수 없어요. 브라우저에서 카메라 권한을 허용해 주세요.'; return; }
+    }catch(e){
+      const n = e && e.name;
+      msg.textContent = n==='NotAllowedError' ? '카메라 권한이 막혀 있어요. 주소창 왼쪽 아이콘 > 권한에서 카메라를 허용해 주세요.'
+        : n==='NotReadableError' || n==='AbortError' ? '다른 탭이나 앱이 카메라를 쓰고 있어요. 게임 탭을 하나만 남기고 닫은 뒤 새로고침해 주세요.'
+        : n==='NotFoundError' || n==='OverconstrainedError' ? '앞 카메라를 찾지 못했어요. 휴대폰을 다시 시작해 보세요.'
+        : '카메라를 켜지 못했어요 (' + (n || '알 수 없는 오류') + '). 새로고침해 주세요.';
+      return;
+    }
     loadPose().catch(() => { S.poseErr = true; });
   }
   msg.textContent = ''; S.mode = 'cam'; S.n = n; startGame();

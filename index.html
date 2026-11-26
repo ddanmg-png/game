@@ -181,14 +181,14 @@ function gesture(p){
 }
 
 /* ---------- layout ---------- */
-const truckL = () => Math.min(W*0.28, H*0.8);     // truck length, side view
+const truckL = () => Math.min(W*0.24, H*0.8);     // truck length, side view
 const truckW = () => truckL()*0.55;                   // size unit for prompts and boarding
 const WIN_X = 0.79, WIN_Y = 0.22, WIN_S = 0.26;       // face window centre and size, in truck lengths from the rear/roof
 // trucks always park on the half opposite the fire, nose toward it; returns each truck's window x
 // trucks park on the half opposite the fire, side by side without overlapping, pushed toward the screen edge;
 // 1P stays on the left and 2P on the right, so the outer truck is 1P when they're on the left and 2P when on the right
 function truckXs(side, n){
-  const L = truckL(), win = WIN_X*L, m = W*0.012, gap = L*0.14;   // gap leaves room for the roof cannon
+  const L = truckL(), win = WIN_X*L, m = -L*0.25, gap = L*0.1;   // outer truck's rear hangs off the screen edge so the inner one stays short of the middle; gap leaves room for the roof cannon
   if(n===1) return side==='L' ? [W - m - L*0.15 - win] : [m + L*0.15 + win];
   if(side==='L'){ const ox1 = W - m, ox0 = ox1 - L - gap; return [ox0 - win, ox1 - win]; }   // facing left, rear at x = ox
   const ox0 = m, ox1 = m + L + gap; return [ox0 + win, ox1 + win];                          // facing right

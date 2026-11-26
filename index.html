@@ -219,27 +219,25 @@ function rr(x,y,w,h,r){ cx.beginPath(); cx.roundRect ? cx.roundRect(x,y,w,h,r) :
 function drawTruck(p, now){
   const { sw, sm, hy } = body(p);
   const k = Math.min(1,(now-S.truckAt)/300), sc = 0.4+0.6*(1-(1-k)**3);
-  const w = sw*2.0*sc, top = sm.y - sw*0.2, h = Math.max(sw*1.2, (hy + sw*0.35 - top))*sc, x = sm.x - w/2;
-  cx.save(); cx.globalAlpha = 0.95;
-  // ladder
-  cx.strokeStyle='#cfd6dd'; cx.lineWidth = sw*0.05;
-  cx.beginPath(); cx.moveTo(x+w*0.12, top-sw*0.12); cx.lineTo(x+w*0.88, top-sw*0.12); cx.moveTo(x+w*0.12, top-sw*0.02); cx.lineTo(x+w*0.88, top-sw*0.02);
-  for(let i=0;i<=6;i++){ const lx = x+w*(0.12+i*0.127); cx.moveTo(lx, top-sw*0.12); cx.lineTo(lx, top-sw*0.02); } cx.stroke();
-  // body
-  cx.fillStyle='#e3261c'; rr(x, top, w, h, sw*0.14); cx.fill();
-  cx.fillStyle='#b5170f'; rr(x, top+h*0.78, w, h*0.22, sw*0.1); cx.fill();
-  // cab window
-  cx.fillStyle='#9fe2ff'; rr(x+w*0.08, top+h*0.08, w*0.36, h*0.26, sw*0.06); cx.fill();
-  cx.fillStyle='rgba(255,255,255,.6)'; cx.fillRect(x+w*0.1, top+h*0.1, w*0.08, h*0.2);
-  // hose reel
-  cx.fillStyle='#ffd23f'; cx.beginPath(); cx.arc(x+w*0.72, top+h*0.22, sw*0.16, 0, 7); cx.fill();
-  cx.fillStyle='#b5170f'; cx.beginPath(); cx.arc(x+w*0.72, top+h*0.22, sw*0.07, 0, 7); cx.fill();
-  // stripe + 119
-  cx.fillStyle='#ffd23f'; cx.fillRect(x, top+h*0.5, w, h*0.09);
-  cx.fillStyle='#fff'; cx.font = `${Math.round(sw*0.32)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
-  cx.fillText('119', sm.x, top+h*0.7);
-  // wheels
-  for(const wx of [x+w*0.22, x+w*0.78]){ cx.fillStyle='#1b1b1f'; cx.beginPath(); cx.arc(wx, top+h, sw*0.22, 0, 7); cx.fill(); cx.fillStyle='#bfc6cc'; cx.beginPath(); cx.arc(wx, top+h, sw*0.09, 0, 7); cx.fill(); }
+  // costume follows 미래's drawing: square red box, blue window in the middle, black wheel on the left, red hose rings on the right, a block underneath
+  const w = sw*1.9*sc, top = sm.y - sw*0.15, h = Math.max(sw*1.1, (hy - top))*sc, x = sm.x - w/2, lw = Math.max(3*DPR, sw*0.07);
+  cx.save(); cx.globalAlpha = 0.95; cx.lineJoin = 'round';
+  // block underneath, left half
+  cx.fillStyle='#e3261c'; cx.strokeStyle='#a3150d'; cx.lineWidth = lw;
+  cx.beginPath(); cx.rect(x+w*0.02, top+h, w*0.5, sw*0.55*sc); cx.fill(); cx.stroke();
+  // main box
+  cx.beginPath(); cx.rect(x, top, w, h); cx.fill(); cx.stroke();
+  // blue window in the middle
+  const ws = Math.min(w,h)*0.36;
+  cx.fillStyle='#2f8fff'; cx.beginPath(); cx.rect(sm.x-ws/2, top+h*0.5-ws/2, ws, ws); cx.fill();
+  cx.fillStyle='rgba(255,255,255,.55)'; cx.fillRect(sm.x-ws*0.38, top+h*0.5-ws*0.38, ws*0.16, ws*0.55);
+  // black wheel on the left edge
+  const wr = Math.min(w,h)*0.2;
+  cx.fillStyle='#16161a'; cx.beginPath(); cx.arc(x, top+h*0.55, wr, 0, 7); cx.fill();
+  cx.fillStyle='#bfc6cc'; cx.beginPath(); cx.arc(x, top+h*0.55, wr*0.42, 0, 7); cx.fill();
+  // red hose rings on the right edge
+  cx.strokeStyle='#ff3b30'; cx.lineWidth = lw*1.3;
+  for(const f of [0.42,0.68]){ cx.beginPath(); cx.ellipse(x+w+wr*0.45, top+h*f, wr*0.55, wr*0.7, 0, 0, 7); cx.stroke(); }
   cx.restore();
   // helmet + siren light on head
   const hx = p.nose.x, hyy = p.nose.y - sw*0.42, hw = sw*0.62*sc;

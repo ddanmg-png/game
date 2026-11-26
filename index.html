@@ -184,10 +184,10 @@ const truckW = () => truckL()*0.55;                   // size unit for prompts a
 const WIN_X = 0.79, WIN_Y = 0.21, WIN_S = 0.22;       // face window centre and size, in truck lengths from the rear/roof
 // trucks always park on the half opposite the fire, nose toward it; returns each truck's window x
 function truckXs(side, n){
-  const L = truckL(), gap = L*0.01, front = 1-WIN_X;   // nose overhang 0.18L + gap = one wheel (0.19L) from the truck ahead
-  const starts = n===1 ? [ (side==='L' ? 0.75 : 0.25)*W - L/2 ]
-    : side==='L' ? [0.52*W, 0.52*W + L + gap] : [0.48*W - 2*L - gap, 0.48*W - L];
-  return starts.map(st => side==='L' ? st + front*L : st + WIN_X*L);
+  const L = truckL(), win = WIN_X*L, step = 0.4*L;   // 0.4L = middle wheel (0.42) of the truck ahead under the front wheel (0.82) of the truck behind
+  if(n===1) return [ (side==='L' ? 0.75 : 0.25)*W + (side==='L' ? -1 : 1)*(win - L/2) ];
+  if(side==='L'){ const w0 = 0.52*W + L - win; return [w0, w0 + step]; }      // facing left: 1P ahead, 2P behind
+  const w1 = 0.48*W - L + win; return [w1 - step, w1];                      // facing right: 2P ahead, 1P behind
 }
 function newRound(){
   S.roundNo++;
@@ -197,7 +197,7 @@ function newRound(){
   S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99, prompt: S.lastPrompt==='up' ? 'fwd' : S.lastPrompt==='fwd' ? 'up' : (Math.random()<0.5 ? 'up' : 'fwd') };
   S.lastPrompt = S.obj.prompt;
   const xs = truckXs(side, S.n);
-  S.trucks = xs.map((x,i) => ({ i, x, y:H*0.42, board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }));
+  S.trucks = xs.map((x,i) => { const behind = S.n===2 && (side==='L' ? i===1 : i===0); return { i, x, behind, defY: H*(behind ? 0.34 : 0.44), y:H*(behind ? 0.34 : 0.44), board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }; });
   S.phase = 'intro'; S.phaseT = 1.4;
   $('roundTxt').textContent = `${S.roundNo} / ${ROUNDS} 라운드`;
   showBanner(`${NAMES[kind]}에 불이 났어요!`, 1300);
@@ -212,7 +212,7 @@ function fireSpots(){
 function assign(){
   const T = S.trucks, P = S.poses.slice(0,2);
   T.forEach(t => t.pose = null);
-  if(S.mode==='touch'){ T.forEach(t => { t.pose = { nose:{x:t.x,y:H*0.42}, sw:truckW()*0.45 }; t.board = true; }); return; }
+  if(S.mode==='touch'){ T.forEach(t => { t.pose = { nose:{x:t.x,y:t.defY}, sw:truckW()*0.45 }; t.board = true; }); return; }
   if(!P.length) { T.forEach(t => t.board=false); return; }
   if(T.length===1){ T[0].pose = P.reduce((a,b) => Math.abs(a.nose.x-T[0].x) < Math.abs(b.nose.x-T[0].x) ? a : b); }
   else if(P.length===1){ const t = Math.abs(P[0].nose.x-T[0].x) < Math.abs(P[0].nose.x-T[1].x) ? T[0] : T[1]; t.pose = P[0]; }
@@ -408,7 +408,7 @@ function frame(now){
     const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1a0d0a'); g.addColorStop(1,'#5a1608'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
   }
   assign();
-  for(const tr of S.trucks){ const ty = tr.board && tr.pose ? tr.pose.nose.y : H*0.42; tr.y += (Math.max(truckL()*0.32 + 50*DPR, Math.min(H - truckL()*0.4, ty)) - tr.y)*Math.min(1, dt*12); tr.spraying = false; }
+  for(const tr of S.trucks){ const ty = tr.board && tr.pose ? tr.pose.nose.y : tr.defY; tr.y += (Math.max(truckL()*0.32 + 50*DPR, Math.min(H - truckL()*0.4, ty)) - tr.y)*Math.min(1, dt*12); tr.spraying = false; }
   S.phaseT -= dt;
   if(S.phase==='intro' && S.phaseT<=0) S.phase = 'play';
   if(S.phase==='play'){
@@ -427,7 +427,8 @@ function frame(now){
   }
   setWater(S.trucks.some(t => t.spraying));
   drawObject(now/1000);
-  for(const tr of S.trucks) drawTruck(tr, now);
+  for(const tr of S.trucks.filter(t => !t.behind)) drawTruck(tr, now);   // truck nearer the fire first, the one behind overlaps it
+  for(const tr of S.trucks.filter(t => t.behind)) drawTruck(tr, now);
   drawParts(dt);
   if(S.phase==='play') for(const tr of S.trucks) drawPrompt(tr, now);
   if(S.phase==='victory'){ const w = S.trucks[S.winner]; if(w){ const s = truckW(); drawCrown(w.x, w.y - truckL()*0.14 - Math.abs(Math.sin(now/160))*truckL()*0.08, s*0.45); } }

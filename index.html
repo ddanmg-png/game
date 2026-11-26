@@ -355,30 +355,34 @@ function label(txt, x, y, size, col, align){
   cx.lineWidth = size*0.22; cx.strokeStyle='#1a0d0a'; cx.strokeText(txt, x, y); cx.fillStyle = col; cx.fillText(txt, x, y);
 }
 const POSE_TEXT = { up:'팔 위로 뻗기!', fwd:'손 앞으로 모으기!', side:'팔 양쪽으로 뻗기!' };
-// small stick figure, about 0.7cm tall (26 CSS px), showing the pose to copy
-function poseIcon(kind, x, y, h){
-  cx.save(); cx.translate(x, y); cx.strokeStyle = '#1a0d0a'; cx.fillStyle = '#1a0d0a'; cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.lineWidth = h*0.09;
-  cx.beginPath(); cx.arc(0, -h*0.36, h*0.11, 0, 7); cx.fill();
-  cx.beginPath(); cx.moveTo(0, -h*0.22); cx.lineTo(0, h*0.12); cx.moveTo(-h*0.13, h*0.48); cx.lineTo(0, h*0.12); cx.lineTo(h*0.13, h*0.48); cx.stroke();
-  cx.beginPath();
-  for(const sx of [-1, 1]){
-    cx.moveTo(sx*h*0.05, -h*0.17);
-    if(kind==='up'){ cx.lineTo(sx*h*0.16, -h*0.38); cx.lineTo(sx*h*0.2, -h*0.56); }
-    else if(kind==='side'){ cx.lineTo(sx*h*0.26, -h*0.17); cx.lineTo(sx*h*0.46, -h*0.17); }
-    else { cx.lineTo(sx*h*0.2, -h*0.04); cx.lineTo(sx*h*0.04, -h*0.04); }
-  }
-  cx.stroke();
-  const hands = kind==='up' ? [[-0.2,-0.56],[0.2,-0.56]] : kind==='side' ? [[-0.46,-0.17],[0.46,-0.17]] : [[-0.035,-0.04],[0.035,-0.04]];
-  cx.fillStyle = '#e3261c'; for(const [hx,hy] of hands){ cx.beginPath(); cx.arc(hx*h, hy*h, h*0.07, 0, 7); cx.fill(); }
+// hand-and-forearm icons drawn after 미래's sketch: red outline, about 0.7cm tall (26 CSS px)
+function armPath(len, w, sx){
+  const R = (x,y,ww,hh,r) => cx.roundRect ? cx.roundRect(x,y,ww,hh,r) : cx.rect(x,y,ww,hh);
+  R(-w/2, -len, w, len + w*0.2, w*0.2);                          // forearm
+  R(-w*0.72, -len - w*1.05, w*1.44, w*1.25, w*0.45);             // palm
+  [0.95,1.15,1.1,0.85].forEach((fl,i) => R(-w*0.7 + i*w*0.37, -len - w*1.05 - w*fl, w*0.3, w*fl + w*0.4, w*0.15));  // fingers
+  cx.save(); cx.translate(sx*w*0.62, -len - w*0.35); cx.rotate(sx*0.9); R(-w*0.14, -w*0.75, w*0.3, w*0.85, w*0.15); cx.restore();  // thumb
+}
+function arm(x, y, angle, len, w, sx){
+  cx.save(); cx.translate(x, y); cx.rotate(angle);
+  cx.beginPath(); armPath(len, w, sx);
+  cx.lineJoin = 'round'; cx.strokeStyle = '#e3261c'; cx.lineWidth = w*0.34; cx.stroke();
+  cx.fillStyle = '#fffaf3'; cx.fill();
   cx.restore();
+}
+function poseIcon(kind, x, y, h){
+  const w = h*0.16;
+  if(kind==='up'){ arm(x - h*0.17, y + h*0.42, -0.1, h*0.42, w, -1); arm(x + h*0.17, y + h*0.42, 0.1, h*0.42, w, 1); }
+  else if(kind==='side'){ arm(x - h*0.1, y + h*0.02, -Math.PI/2, h*0.18, w*0.9, 1); arm(x + h*0.1, y + h*0.02, Math.PI/2, h*0.18, w*0.9, -1); }
+  else { arm(x - h*0.36, y + h*0.05, Math.PI/2, h*0.1, w*1.05, -1); arm(x + h*0.36, y + h*0.05, -Math.PI/2, h*0.1, w*1.05, 1); }
 }
 function drawPrompt(tr, now){
   if(!tr.board || !tr.prompt || !tr.pose) return;
   const p = tr.pose, kind = tr.prompt, bw = truckW(), ih = 26*DPR;
-  const r = ih*0.62*(1 + Math.sin(now/150)*0.08);
+  const r = ih*0.7*(1 + Math.sin(now/150)*0.08);
   const tx = p.nose.x, ty = kind==='fwd' ? Math.min(H - r*1.6 - 50*DPR, tr.y + bw*0.6) : Math.max(r*1.6 + 56*DPR, tr.y - bw*0.8);
   cx.save();
-  cx.fillStyle = tr.spraying ? 'rgba(95,208,255,.95)' : 'rgba(255,210,63,.95)';
+  cx.fillStyle = tr.spraying ? 'rgba(95,208,255,.95)' : 'rgba(255,210,63,.95)';   // yellow point; hands drawn on top
   cx.beginPath(); cx.arc(tx, ty, r, 0, 7); cx.fill();
   cx.strokeStyle = '#fff'; cx.lineWidth = 3*DPR; cx.beginPath(); cx.arc(tx, ty, r*1.3, 0, 7); cx.stroke();
   cx.restore();

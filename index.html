@@ -8,42 +8,48 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-/* VOICE occasion: a children's game
-   IDEA a fire engine dispatch panel: red enamel, yellow reflective stripes, 119
-   PICTURE the live camera feed with fires, a truck costume and a water jet drawn on it
-   COLOUR night ground #1a0d0a, engine red #e3261c, stripe yellow #ffd23f, water #5fd0ff
+/* VOICE occasion: a children's party game for one or two players
+   IDEA a fire engine dispatch panel: red enamel, yellow stripes, 119
+   PICTURE landscape camera feed, a burning car/house/tree at one side, fire trucks whose window holds the player's face
+   COLOUR night ground #1a0d0a, engine red #e3261c, stripe yellow #ffd23f, water #5fd0ff, P1 blue #2f8fff, P2 green #2fd16b
    TYPE Black Han Sans display + Noto Sans KR
-   LAYOUT full-screen portrait canvas, HUD across the top, hint pill at the bottom */
-:root{--bg:#1a0d0a;--red:#e3261c;--red2:#9e140e;--yel:#ffd23f;--water:#5fd0ff;--ink:#fff8ef}
+   LAYOUT full-screen landscape canvas, score panels top-left and top-right, hint pill at the bottom */
+:root{--bg:#1a0d0a;--red:#e3261c;--red2:#9e140e;--yel:#ffd23f;--p1:#2f8fff;--p2:#2fd16b;--ink:#fff8ef}
 *{box-sizing:border-box;margin:0;min-width:0}
+[hidden]{display:none!important}
 html,body{height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 "Noto Sans KR",system-ui,sans-serif;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 video{display:none}
-[hidden]{display:none!important}
-.hud{position:fixed;left:0;right:0;top:0;display:flex;gap:10px;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));pointer-events:none}
-.chip{background:rgba(20,8,6,.72);border:2px solid rgba(255,210,63,.5);border-radius:14px;padding:4px 12px;font-family:"Black Han Sans",sans-serif;font-size:22px;white-space:nowrap}
-.chip small{font-family:"Noto Sans KR",sans-serif;font-size:13px;opacity:.8;margin-right:6px}
-.tank{flex:1;height:22px;background:rgba(20,8,6,.72);border:2px solid rgba(95,208,255,.6);border-radius:12px;overflow:hidden;position:relative}
-.tank i{position:absolute;inset:0;width:0%;background:linear-gradient(90deg,#2a8fd6,var(--water));transition:width .15s}
-.tank b{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:700;text-shadow:0 1px 2px #000}
-.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);background:rgba(20,8,6,.8);border:2px solid var(--yel);border-radius:999px;padding:10px 20px;font-weight:900;font-size:17px;text-align:center;width:max-content;max-width:calc(100% - 32px);pointer-events:none}
-.touchbtn{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 80px);background:var(--red);color:#fff;border:3px solid var(--yel);border-radius:50%;width:84px;height:84px;font:20px/1.1 "Black Han Sans",sans-serif}
-.over{position:fixed;inset:0;display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));background:radial-gradient(120% 80% at 50% 100%,#5a1608 0%,#1a0d0a 70%);overflow-y:auto}
-.card{width:min(440px,100%);text-align:center}
-.badge{display:inline-grid;place-items:center;width:88px;height:88px;border-radius:50%;background:var(--red);border:5px solid var(--yel);font:34px "Black Han Sans",sans-serif;color:#fff;box-shadow:0 0 0 6px var(--red2)}
-h1{font:clamp(40px,11vw,56px)/1.05 "Black Han Sans",sans-serif;letter-spacing:-.01em;margin:16px 0 6px;color:var(--yel)}
-.sub{opacity:.85;margin-bottom:18px}
-.steps{display:grid;gap:10px;text-align:left;margin-bottom:22px}
-.step{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;background:rgba(255,255,255,.06);border-radius:16px;padding:10px 12px;border-left:6px solid var(--yel)}
-.step svg{width:64px;height:64px}
-.step b{display:block;font-size:17px}
-.step span{font-size:14px;opacity:.85}
-.btn{display:block;width:100%;border:0;border-radius:18px;padding:16px;font:24px "Black Han Sans",sans-serif;color:#fff;background:var(--red);box-shadow:0 6px 0 var(--red2);margin-bottom:12px;cursor:pointer}
-.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--red2)}
-.btn.alt{background:#3a2a26;box-shadow:0 6px 0 #1f1512;font-size:18px}
-.msg{min-height:1.5em;color:var(--yel);font-weight:700;margin-bottom:10px}
-.big{font:72px/1 "Black Han Sans",sans-serif;color:var(--yel);margin:8px 0}
-.note{font-size:13px;opacity:.7}
+.hud{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:calc(env(safe-area-inset-top,0px) + 8px) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));pointer-events:none}
+.pl{background:rgba(20,8,6,.75);border:3px solid var(--c);border-radius:14px;padding:4px 12px;display:flex;align-items:center;gap:10px}
+.pl b{font:22px "Black Han Sans",sans-serif;color:var(--c)}
+.pips{display:flex;gap:5px}
+.pips i{width:16px;height:16px;border-radius:50%;border:2px solid var(--c)}
+.pips i.on{background:var(--yel);border-color:var(--yel)}
+.round{font:18px "Black Han Sans",sans-serif;background:rgba(20,8,6,.75);border-radius:12px;padding:4px 12px;border:2px solid rgba(255,210,63,.5)}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);background:rgba(20,8,6,.82);border:2px solid var(--yel);border-radius:999px;padding:8px 20px;font-weight:900;font-size:17px;text-align:center;width:max-content;max-width:calc(100% - 32px);pointer-events:none}
+.banner{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font:clamp(36px,8vw,72px)/1.05 "Black Han Sans",sans-serif;color:var(--yel);text-align:center;pointer-events:none;-webkit-text-stroke:2px #5a1608;text-shadow:0 4px 0 #5a1608;white-space:nowrap}
+.rotate{position:fixed;inset:0;display:none;place-items:center;text-align:center;background:var(--bg);padding:24px;font:28px/1.3 "Black Han Sans",sans-serif;color:var(--yel);z-index:5}
+.rotate svg{width:96px;height:96px;margin:0 auto 16px;display:block}
+@media (orientation:portrait){body.playing .rotate{display:grid}}
+.over{position:fixed;inset:0;display:grid;place-items:safe center;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));background:radial-gradient(120% 90% at 50% 100%,#5a1608 0%,#1a0d0a 70%);overflow-y:auto;touch-action:pan-y}
+.card{width:min(860px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:24px;align-items:center}
+.head{text-align:center}
+.badge{display:inline-grid;place-items:center;width:76px;height:76px;border-radius:50%;background:var(--red);border:5px solid var(--yel);font:30px "Black Han Sans",sans-serif;color:#fff;box-shadow:0 0 0 6px var(--red2)}
+h1{font:clamp(34px,6vw,50px)/1.05 "Black Han Sans",sans-serif;margin:14px 0 6px;color:var(--yel)}
+.sub{opacity:.85;margin-bottom:14px;font-size:15px}
+.steps{list-style:none;padding:0;display:grid;gap:5px;margin-bottom:12px}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;background:rgba(255,255,255,.06);border-radius:12px;padding:5px 10px;font-size:14px;line-height:1.35}
+.steps li span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--red);font:16px "Black Han Sans",sans-serif}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:14px 10px;font:22px "Black Han Sans",sans-serif;color:#fff;background:var(--red);box-shadow:0 5px 0 var(--red2);cursor:pointer}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--red2)}
+.btn.alt{background:#3a2a26;box-shadow:0 5px 0 #1f1512;font-size:16px;grid-column:1/-1}
+.msg{min-height:1.4em;color:var(--yel);font-weight:700;margin:8px 0;text-align:center}
+.note{font-size:12px;opacity:.7;text-align:center}
+.end{text-align:center;width:min(440px,100%)}
+.big{font:64px/1 "Black Han Sans",sans-serif;color:var(--yel);margin:8px 0 16px}
+@media (max-width:640px) and (orientation:portrait){.card{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -51,46 +57,46 @@ h1{font:clamp(40px,11vw,56px)/1.05 "Black Han Sans",sans-serif;letter-spacing:-.
 <canvas id="cv"></canvas>
 
 <div class="hud" id="hud" hidden>
-  <div class="chip"><small>점수</small><span id="score">0</span></div>
-  <div class="tank"><i id="tankbar"></i><b>물탱크</b></div>
-  <div class="chip"><small>남은</small><span id="time">90</span></div>
+  <div class="pl" style="--c:var(--p1)"><b>1P</b><div class="pips" id="pips0"></div></div>
+  <div class="round" id="roundTxt">1라운드</div>
+  <div class="pl" id="pl2" style="--c:var(--p2)"><b>2P</b><div class="pips" id="pips1"></div></div>
 </div>
 <div class="hint" id="hint" hidden></div>
-<button class="touchbtn" id="touchSiren" hidden>사이렌</button>
+<div class="banner" id="banner" hidden></div>
+<div class="rotate"><div><svg viewBox="0 0 96 96"><rect x="30" y="14" width="36" height="62" rx="6" fill="none" stroke="#ffd23f" stroke-width="5"/><path d="M14 66a36 36 0 0 0 52 18" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M60 78l7 7-9 3" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>휴대폰을 가로로<br>돌려 주세요</div></div>
 
 <div class="over" id="startScreen">
   <div class="card">
-    <div class="badge">119</div>
-    <h1>출동! 꼬마 소방관</h1>
-    <p class="sub">카메라 앞에서 몸으로 불을 꺼요.<br>휴대폰을 세워 두고 2m쯤 물러나세요.</p>
-    <div class="steps">
-      <div class="step">
-        <svg viewBox="0 0 64 64"><circle cx="32" cy="40" r="22" fill="#3a1a12"/><path d="M32 52c-9 0-14-6-14-13 0-8 7-11 9-20 3 5 2 9 5 11 1-5 4-8 6-11 1 8 8 12 8 20 0 7-5 13-14 13z" fill="#ff7a00"/><path d="M32 52c-5 0-8-3-8-7 0-5 4-6 5-11 2 3 2 5 3 6 1-3 3-4 4-6 1 5 4 7 4 11 0 4-3 7-8 7z" fill="#ffe066"/></svg>
-        <div><b>불이 나타나요</b><span>화면 여기저기에 불이 붙어요.</span></div>
-      </div>
-      <div class="step">
-        <svg viewBox="0 0 64 64"><circle cx="32" cy="40" r="22" fill="#3a1a12"/><circle cx="32" cy="30" r="9" fill="#ffd9b8"/><path d="M14 18 25 24M50 18 39 24" stroke="#ffd9b8" stroke-width="5" stroke-linecap="round"/><rect x="20" y="40" width="24" height="16" rx="3" fill="#e3261c"/><rect x="27" y="12" width="10" height="6" rx="2" fill="#5fd0ff"/></svg>
-        <div><b>머리 위에 두 손</b><span>삐용삐용! 소방차로 변신해요.</span></div>
-      </div>
-      <div class="step">
-        <svg viewBox="0 0 64 64"><circle cx="32" cy="40" r="22" fill="#3a1a12"/><circle cx="32" cy="24" r="8" fill="#ffd9b8"/><rect x="20" y="34" width="24" height="18" rx="3" fill="#e3261c"/><circle cx="32" cy="42" r="4" fill="#ffd9b8"/><path d="M32 38 C30 26 28 16 24 8" stroke="#5fd0ff" stroke-width="5" stroke-linecap="round" fill="none"/></svg>
-        <div><b>두 손을 앞으로 모아요</b><span>물이 나가요! 손을 좌우로 움직여 조준해요.</span></div>
-      </div>
+    <div class="head">
+      <div class="badge">119</div>
+      <h1>출동! 꼬마 소방관</h1>
+      <p class="sub">휴대폰을 가로로 세워 두고<br>몸이 다 보이게 2m쯤 물러나세요.</p>
     </div>
-    <p class="msg" id="msg"></p>
-    <button class="btn" id="startCam">카메라로 시작</button>
-    <button class="btn alt" id="startTouch">카메라 없이 터치로 해 보기</button>
-    <p class="note">카메라 영상은 휴대폰 안에서만 쓰이고 어디로도 보내지 않아요.</p>
+    <div>
+      <ol class="steps">
+        <li><span>1</span>왼쪽이나 오른쪽에 불난 자동차, 집, 나무가 나타나요.</li>
+        <li><span>2</span>삐용삐용! 소방차가 출동해요. (최대 2명)</li>
+        <li><span>3</span>내 소방차로 걸어가 얼굴을 파란 창문에 넣어요.</li>
+        <li><span>4</span>노란 포인트를 따라 손을 위로 또는 앞으로! 물대포 발사!</li>
+        <li><span>5</span>물을 더 많이 쏜 사람이 1점. 5점 먼저 내면 승리!</li>
+      </ol>
+      <div class="btns">
+        <button class="btn" id="start1">혼자 하기</button>
+        <button class="btn" id="start2">둘이 하기</button>
+        <button class="btn alt" id="startTouch">카메라 없이 터치로 해 보기</button>
+      </div>
+      <p class="msg" id="msg"></p>
+      <p class="note">카메라 영상은 휴대폰 안에서만 쓰이고 어디로도 보내지 않아요.</p>
+    </div>
   </div>
 </div>
 
 <div class="over" id="endScreen" hidden>
-  <div class="card">
+  <div class="end">
     <div class="badge">119</div>
-    <h1>임무 완료!</h1>
-    <div class="big" id="finalScore">0</div>
-    <p class="sub" id="finalInfo"></p>
-    <button class="btn" id="again">다시 출동</button>
+    <h1 id="endTitle">임무 완료!</h1>
+    <div class="big" id="endScore">5 : 0</div>
+    <div class="btns"><button class="btn" id="again" style="grid-column:1/-1">다시 출동</button></div>
   </div>
 </div>
 
@@ -101,13 +107,16 @@ let W = 0, H = 0, DPR = 1;
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = cv.width = Math.round(innerWidth*DPR); H = cv.height = Math.round(innerHeight*DPR); }
 addEventListener('resize', resize); resize();
 
-const GAME_TIME = 90, MAX_FIRES = 6;
-const S = { mode:null, running:false, score:0, out:0, t:0, fires:[], parts:[], steam:[], truck:false, truckAt:0, tank:0,
-  spraying:false, pose:null, poseAt:-1e9, headHold:0, sirenAt:-1e9, spawnIn:1, pointer:null, hint:'' };
+const WIN = 5, SPRAY_TIME = 5;            // seconds of one player's water to put out a fire
+const COLORS = ['#2f8fff', '#2fd16b'];
+const KINDS = ['car', 'house', 'tree'];
+const S = { mode:null, n:1, phase:'idle', phaseT:0, scores:[0,0], roundNo:0, obj:null, trucks:[], poses:[], posesAt:-1e9,
+  parts:[], steam:[], confetti:[], pointer:null, hint:'', winner:-1, lastKind:'' };
 
 /* ---------- audio ---------- */
 let ac = null, waterGain = null;
 function initAudio(){
+  if(ac){ if(ac.state==='suspended') ac.resume(); return; }
   try{
     ac = new (window.AudioContext||window.webkitAudioContext)();
     const len = ac.sampleRate*2, buf = ac.createBuffer(1,len,ac.sampleRate), d = buf.getChannelData(0);
@@ -118,23 +127,17 @@ function initAudio(){
     src.connect(bp).connect(waterGain).connect(ac.destination); src.start();
   }catch(e){ ac = null; }
 }
-function siren(){
+function tone(type, freqs, step, vol){
   if(!ac) return;
-  const t0 = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter();
-  o.type='sawtooth'; lp.type='lowpass'; lp.frequency.value=2200;
-  o.connect(lp).connect(g).connect(ac.destination);
-  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.18,t0+0.05);
-  for(let i=0;i<4;i++){ const t = t0+i*0.7; o.frequency.setValueAtTime(980,t); o.frequency.setValueAtTime(980,t+0.33); o.frequency.setValueAtTime(740,t+0.35); }
-  g.gain.setValueAtTime(0.18,t0+2.7); g.gain.exponentialRampToValueAtTime(0.0001,t0+2.85);
-  o.start(t0); o.stop(t0+2.9);
+  const t0 = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.connect(g).connect(ac.destination);
+  freqs.forEach((f,i) => o.frequency.setValueAtTime(f, t0+i*step));
+  g.gain.setValueAtTime(vol, t0); g.gain.setValueAtTime(vol, t0+freqs.length*step-0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0+freqs.length*step+0.1);
+  o.start(t0); o.stop(t0+freqs.length*step+0.15);
 }
-function pop(){
-  if(!ac) return;
-  const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
-  o.type='sine'; o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(1760,t+0.12);
-  g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);
-  o.connect(g).connect(ac.destination); o.start(t); o.stop(t+0.3);
-}
+const siren = () => tone('sawtooth', [980,740,980,740,980,740], 0.35, 0.14);
+const pop = () => tone('sine', [880,1320,1760], 0.08, 0.2);
+const fanfare = () => tone('square', [523,659,784,1047,784,1047], 0.16, 0.1);
 function setWater(on){ if(waterGain) waterGain.gain.setTargetAtTime(on?0.22:0, ac.currentTime, 0.05); }
 
 /* ---------- pose ---------- */
@@ -142,217 +145,282 @@ let landmarker = null, lastVT = -1;
 async function loadPose(){
   const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
   const files = await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
-  const opts = d => ({ baseOptions:{ modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task', delegate:d }, runningMode:'VIDEO', numPoses:1 });
+  const opts = d => ({ baseOptions:{ modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task', delegate:d }, runningMode:'VIDEO', numPoses:2 });
   try{ landmarker = await vision.PoseLandmarker.createFromOptions(files, opts('GPU')); }
   catch(e){ landmarker = await vision.PoseLandmarker.createFromOptions(files, opts('CPU')); }
 }
-function cover(){ const vw = video.videoWidth||640, vh = video.videoHeight||480, s = Math.max(W/vw,H/vh); return {vw,vh,s,ox:(W-vw*s)/2,oy:(H-vh*s)/2}; }
+function cover(){ const vw = video.videoWidth||1280, vh = video.videoHeight||720, s = Math.max(W/vw,H/vh); return {vw,vh,s,ox:(W-vw*s)/2,oy:(H-vh*s)/2}; }
 function toScreen(l,c){ return { x: W-(c.ox+l.x*c.vw*c.s), y: c.oy+l.y*c.vh*c.s, v: l.visibility ?? 1 }; }
 function detect(now){
   if(!landmarker || video.readyState<2 || video.currentTime===lastVT) return;
   lastVT = video.currentTime;
   const r = landmarker.detectForVideo(video, now);
-  const lm = r && r.landmarks && r.landmarks[0];
-  if(!lm) return;
-  const c = cover(), P = i => toScreen(lm[i],c);
-  const p = { nose:P(0), ls:P(11), rs:P(12), lw:P(15), rw:P(16), lh:P(23), rh:P(24) };
-  if(p.ls.v<0.4 || p.rs.v<0.4) return;
-  S.pose = p; S.poseAt = now;
-}
-function body(p){
-  const sw = Math.hypot(p.ls.x-p.rs.x, p.ls.y-p.rs.y) || 1;
-  const sm = { x:(p.ls.x+p.rs.x)/2, y:(p.ls.y+p.rs.y)/2 };
-  const hipsOk = p.lh.v>0.3 && p.rh.v>0.3;
-  const hy = hipsOk ? (p.lh.y+p.rh.y)/2 : sm.y+sw*1.6;
-  return { sw, sm, hy };
-}
-function gestures(p, dt, now){
-  const { sw, sm, hy } = body(p);
-  const wOk = p.lw.v>0.35 && p.rw.v>0.35;
-  const onHead = wOk && [p.lw,p.rw].every(w => w.y < sm.y - sw*0.55 && Math.abs(w.x-p.nose.x) < sw*1.3);
-  S.headHold = onHead ? S.headHold+dt : 0;
-  if(S.headHold>0.35 && now-S.sirenAt>3000) dispatch(now);
-  const gap = Math.hypot(p.lw.x-p.rw.x, p.lw.y-p.rw.y);
-  const mid = { x:(p.lw.x+p.rw.x)/2, y:(p.lw.y+p.rw.y)/2 };
-  const together = wOk && !onHead && gap < sw*0.6 && mid.y > p.nose.y - sw*0.2 && mid.y < hy + sw*0.3;
-  if(together){
-    const tilt = Math.max(-1.6, Math.min(1.6, (mid.x-sm.x)/sw)) * 0.5;
-    return { origin:mid, dir:{ x:Math.sin(tilt), y:-Math.cos(tilt) } };
+  const c = cover(), out = [];
+  for(const lm of (r && r.landmarks) || []){
+    const P = i => toScreen(lm[i],c);
+    const p = { nose:P(0), ls:P(11), rs:P(12), lw:P(15), rw:P(16) };
+    if(p.nose.v<0.4) continue;
+    p.sw = Math.max(20*DPR, Math.hypot(p.ls.x-p.rs.x, p.ls.y-p.rs.y));
+    out.push(p);
   }
+  if(out.length || now-S.posesAt>500){ S.poses = out; S.posesAt = now; }
+}
+function gesture(p){
+  const ok = p.lw.v>0.35 && p.rw.v>0.35;
+  if(!ok) return null;
+  if(p.lw.y < p.nose.y - p.sw*0.3 && p.rw.y < p.nose.y - p.sw*0.3) return 'up';
+  const gap = Math.hypot(p.lw.x-p.rw.x, p.lw.y-p.rw.y), my = (p.lw.y+p.rw.y)/2;
+  if(gap < p.sw*0.75 && my > p.nose.y && my < p.nose.y + p.sw*3) return 'fwd';
   return null;
 }
-function dispatch(now){
-  S.sirenAt = now; S.truck = true; S.truckAt = now; S.tank = 100; siren();
+
+/* ---------- layout ---------- */
+const truckW = () => Math.min(W*0.22, H*0.42);
+function truckXs(side, n){
+  if(side==='L') return n===1 ? [0.62] : [0.5, 0.8];
+  return n===1 ? [0.38] : [0.2, 0.5];
+}
+function newRound(){
+  S.roundNo++;
+  const side = Math.random()<0.5 ? 'L' : 'R';
+  let kind; do{ kind = KINDS[Math.floor(Math.random()*3)]; } while(kind===S.lastKind);
+  S.lastKind = kind;
+  S.obj = { side, kind, hp:1, contrib:[0,0], seed:Math.random()*99 };
+  const xs = truckXs(side, S.n);
+  S.trucks = xs.map((fx,i) => ({ i, x:fx*W, fx, y:H*0.42, board:false, pose:null, prompt:null, promptT:0, spraying:false, born:performance.now()+400+i*250 }));
+  S.phase = 'intro'; S.phaseT = 1.4;
+  $('roundTxt').textContent = S.roundNo + '라운드';
+  showBanner(kind==='car' ? '자동차에 불이 났어요!' : kind==='house' ? '집에 불이 났어요!' : '나무에 불이 났어요!', 1300);
+  setTimeout(siren, 350);
+}
+function objBase(){ const o = S.obj, s = H*0.36; return { x: (o.side==='L' ? 0.16 : 0.84)*W, y: H*0.96, s }; }
+function fireSpots(){
+  const o = S.obj, b = objBase(), d = { car:[[-0.25,-0.55],[0.3,-0.5],[0.02,-0.7]], house:[[-0.25,-1.2],[0.2,-1.05],[0.02,-1.45]], tree:[[0,-1.35],[-0.3,-1.0],[0.3,-1.05]] }[o.kind];
+  return d.map(([dx,dy]) => ({ x:b.x+dx*b.s, y:b.y+dy*b.s }));
+}
+function assign(){
+  const T = S.trucks, P = S.poses.slice(0,2);
+  T.forEach(t => t.pose = null);
+  if(S.mode==='touch'){ T.forEach(t => { t.pose = { nose:{x:t.x,y:H*0.42}, sw:truckW()*0.45 }; t.board = true; }); return; }
+  if(!P.length) { T.forEach(t => t.board=false); return; }
+  if(T.length===1){ T[0].pose = P.reduce((a,b) => Math.abs(a.nose.x-T[0].x) < Math.abs(b.nose.x-T[0].x) ? a : b); }
+  else if(P.length===1){ const t = Math.abs(P[0].nose.x-T[0].x) < Math.abs(P[0].nose.x-T[1].x) ? T[0] : T[1]; t.pose = P[0]; }
+  else { const a = P[0].nose.x < P[1].nose.x ? P[0] : P[1], b = a===P[0] ? P[1] : P[0]; T[0].pose = a; T[1].pose = b; }
+  const lim = truckW()*0.6;
+  T.forEach(t => t.board = !!t.pose && Math.abs(t.pose.nose.x - t.x) < lim && t.pose.nose.y > H*0.08 && t.pose.nose.y < H*0.8);
 }
 
-/* ---------- fires ---------- */
-function spawnFire(){
-  const r0 = Math.min(W,H)*0.075;
-  for(let k=0;k<20;k++){
-    const x = W*(0.14+Math.random()*0.72), y = H*(0.16+Math.random()*0.42);
-    if(S.fires.every(f => Math.hypot(f.x-x,f.y-y) > (f.r+r0)*1.6)){ S.fires.push({ x, y, r0, r:r0*0.3, age:0, hp:1, seed:Math.random()*99, hit:0 }); return; }
-  }
-}
-function drawFire(f, t){
-  const r = f.r, life = Math.max(0.15, f.hp);
-  const g = cx.createRadialGradient(f.x,f.y,0,f.x,f.y,r*2.2);
+/* ---------- drawing ---------- */
+function flame(x, y, r, t, seed){
+  const g = cx.createRadialGradient(x,y,0,x,y,r*2.2);
   g.addColorStop(0,'rgba(255,140,0,.45)'); g.addColorStop(1,'rgba(255,60,0,0)');
-  cx.fillStyle = g; cx.beginPath(); cx.arc(f.x,f.y,r*2.2,0,7); cx.fill();
-  const layers = [['#e8320c',1],['#ff8a00',0.72],['#ffe066',0.42]];
-  for(const [col,sc] of layers){
+  cx.fillStyle = g; cx.beginPath(); cx.arc(x,y,r*2.2,0,7); cx.fill();
+  for(const [col,sc] of [['#e8320c',1],['#ff8a00',0.72],['#ffe066',0.42]]){
     cx.fillStyle = col;
     for(let i=-1;i<=1;i++){
-      const w = r*sc*(i===0?0.9:0.6)*life, h = r*sc*(i===0?2.1:1.5)*life;
-      const bx = f.x + i*r*sc*0.55, by = f.y + r*0.5;
-      const sway = Math.sin(t*9 + f.seed + i*2)*w*0.35;
+      const w = r*sc*(i===0?0.9:0.6), h = r*sc*(i===0?2.1:1.5), bx = x + i*r*sc*0.55, by = y + r*0.5;
+      const sway = Math.sin(t*9 + seed + i*2)*w*0.35;
       cx.beginPath(); cx.moveTo(bx-w,by);
       cx.quadraticCurveTo(bx-w*1.05, by-h*0.55, bx+sway, by-h);
       cx.quadraticCurveTo(bx+w*1.05, by-h*0.55, bx+w, by);
       cx.quadraticCurveTo(bx, by+w*0.7, bx-w, by); cx.fill();
     }
   }
-  if(f.hit>0){ cx.fillStyle='rgba(255,255,255,.9)'; cx.fillRect(f.x-r, f.y+r*1.05, r*2, 6*DPR); cx.fillStyle='#5fd0ff'; cx.fillRect(f.x-r, f.y+r*1.05, r*2*f.hp, 6*DPR); }
 }
-
-/* ---------- costume ---------- */
-function rr(x,y,w,h,r){ cx.beginPath(); cx.roundRect ? cx.roundRect(x,y,w,h,r) : cx.rect(x,y,w,h); }
-function drawTruck(p, now){
-  const { sw, sm, hy } = body(p);
-  const k = Math.min(1,(now-S.truckAt)/300), sc = 0.4+0.6*(1-(1-k)**3);
-  // costume follows 미래's drawing: square red box, blue window in the middle, black wheel on the left, red hose rings on the right, a block underneath
-  const w = sw*1.9*sc, top = sm.y - sw*0.15, h = Math.max(sw*1.1, (hy - top))*sc, x = sm.x - w/2, lw = Math.max(3*DPR, sw*0.07);
-  cx.save(); cx.globalAlpha = 0.95; cx.lineJoin = 'round';
-  // block underneath, left half
-  cx.fillStyle='#e3261c'; cx.strokeStyle='#a3150d'; cx.lineWidth = lw;
-  cx.beginPath(); cx.rect(x+w*0.02, top+h, w*0.5, sw*0.55*sc); cx.fill(); cx.stroke();
-  // main box
-  cx.beginPath(); cx.rect(x, top, w, h); cx.fill(); cx.stroke();
-  // blue window in the middle
-  const ws = Math.min(w,h)*0.36;
-  cx.fillStyle='#2f8fff'; cx.beginPath(); cx.rect(sm.x-ws/2, top+h*0.5-ws/2, ws, ws); cx.fill();
-  cx.fillStyle='rgba(255,255,255,.55)'; cx.fillRect(sm.x-ws*0.38, top+h*0.5-ws*0.38, ws*0.16, ws*0.55);
-  // black wheel on the left edge
-  const wr = Math.min(w,h)*0.2;
-  cx.fillStyle='#16161a'; cx.beginPath(); cx.arc(x, top+h*0.55, wr, 0, 7); cx.fill();
-  cx.fillStyle='#bfc6cc'; cx.beginPath(); cx.arc(x, top+h*0.55, wr*0.42, 0, 7); cx.fill();
-  // red hose rings on the right edge
-  cx.strokeStyle='#ff3b30'; cx.lineWidth = lw*1.3;
-  for(const f of [0.42,0.68]){ cx.beginPath(); cx.ellipse(x+w+wr*0.45, top+h*f, wr*0.55, wr*0.7, 0, 0, 7); cx.stroke(); }
+function drawObject(t){
+  const o = S.obj, { x, y, s } = objBase(), burnt = o.hp < 1;
+  cx.save(); cx.lineJoin='round'; cx.lineWidth = s*0.03; cx.strokeStyle = '#1b0f0c';
+  cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(x, y, s*0.75, s*0.08, 0, 0, 7); cx.fill();
+  if(o.kind==='car'){
+    cx.fillStyle = '#3b7dd8'; cx.beginPath(); cx.moveTo(x-s*0.7,y-s*0.15); cx.lineTo(x-s*0.7,y-s*0.42); cx.lineTo(x-s*0.4,y-s*0.45); cx.lineTo(x-s*0.25,y-s*0.72); cx.lineTo(x+s*0.3,y-s*0.72); cx.lineTo(x+s*0.48,y-s*0.45); cx.lineTo(x+s*0.72,y-s*0.4); cx.lineTo(x+s*0.72,y-s*0.15); cx.closePath(); cx.fill(); cx.stroke();
+    cx.fillStyle = '#bfe6ff'; cx.fillRect(x-s*0.2,y-s*0.66,s*0.2,s*0.2); cx.fillRect(x+s*0.05,y-s*0.66,s*0.2,s*0.2);
+    for(const wx of [x-s*0.42, x+s*0.42]){ cx.fillStyle='#16161a'; cx.beginPath(); cx.arc(wx,y-s*0.14,s*0.14,0,7); cx.fill(); cx.fillStyle='#bfc6cc'; cx.beginPath(); cx.arc(wx,y-s*0.14,s*0.06,0,7); cx.fill(); }
+  } else if(o.kind==='house'){
+    cx.fillStyle = '#f1d8a8'; cx.fillRect(x-s*0.5,y-s*0.85,s,s*0.85); cx.strokeRect(x-s*0.5,y-s*0.85,s,s*0.85);
+    cx.fillStyle = '#8a3b22'; cx.beginPath(); cx.moveTo(x-s*0.65,y-s*0.82); cx.lineTo(x,y-s*1.35); cx.lineTo(x+s*0.65,y-s*0.82); cx.closePath(); cx.fill(); cx.stroke();
+    cx.fillStyle = '#6b3a1f'; cx.fillRect(x-s*0.12,y-s*0.42,s*0.24,s*0.42);
+    cx.fillStyle = '#ffe08a'; cx.fillRect(x-s*0.4,y-s*0.65,s*0.2,s*0.18); cx.fillRect(x+s*0.2,y-s*0.65,s*0.2,s*0.18);
+  } else {
+    cx.fillStyle = '#7a4a26'; cx.fillRect(x-s*0.09,y-s*0.6,s*0.18,s*0.6); cx.strokeRect(x-s*0.09,y-s*0.6,s*0.18,s*0.6);
+    cx.fillStyle = '#2e9e48';
+    for(const [dx,dy,r] of [[0,-1.05,0.38],[-0.3,-0.82,0.3],[0.3,-0.82,0.3],[0,-0.75,0.3]]){ cx.beginPath(); cx.arc(x+dx*s,y+dy*s,r*s,0,7); cx.fill(); }
+  }
+  if(burnt){ cx.globalAlpha = (1-o.hp)*0.55; cx.fillStyle = '#2a2420'; cx.globalCompositeOperation='source-atop'; cx.beginPath(); cx.ellipse(x, y-s*0.6, s*0.8, s*0.9, 0, 0, 7); cx.fill(); }
   cx.restore();
-  // helmet + siren light on head
-  const hx = p.nose.x, hyy = p.nose.y - sw*0.42, hw = sw*0.62*sc;
-  cx.fillStyle='#e3261c'; cx.beginPath(); cx.ellipse(hx, hyy, hw, hw*0.62, 0, Math.PI, 0); cx.fill();
-  cx.fillRect(hx-hw*1.25, hyy-2*DPR, hw*2.5, sw*0.08);
-  cx.fillStyle='#ffd23f'; cx.fillRect(hx-hw*0.12, hyy-hw*0.6, hw*0.24, hw*0.6);
-  const on = Math.floor(now/180)%2===0;
-  cx.fillStyle = on ? '#ff2a2a' : '#2a7bff';
-  cx.beginPath(); cx.ellipse(hx, hyy-hw*0.78, hw*0.28, hw*0.22, 0, 0, 7); cx.fill();
-  const gl = cx.createRadialGradient(hx, hyy-hw*0.78, 0, hx, hyy-hw*0.78, sw*1.3);
-  gl.addColorStop(0, on?'rgba(255,40,40,.45)':'rgba(40,120,255,.45)'); gl.addColorStop(1,'rgba(0,0,0,0)');
-  cx.fillStyle = gl; cx.beginPath(); cx.arc(hx, hyy-hw*0.78, sw*1.3, 0, 7); cx.fill();
+  if(o.hp>0){ const r = s*0.2*(0.35+0.65*o.hp); fireSpots().forEach((p,i) => flame(p.x, p.y, r*(i===2?0.8:1), t, o.seed+i*3)); }
+}
+function drawTruck(tr, now){
+  const k = Math.max(0, Math.min(1,(now-tr.born)/400)); if(k<=0) return;
+  const sc = 1-(1-k)**3, bw = truckW()*sc, bh = bw*0.8, x = tr.x - bw/2, top = tr.y - bh/2, lw = Math.max(3*DPR, bw*0.035);
+  const face = S.obj.side==='L' ? -1 : 1; // side facing the fire gets the hoses, the wheel goes on the other side
+  const bounce = S.phase==='victory' && tr.i===S.winner ? Math.abs(Math.sin(now/160))*bh*0.18 : 0;
+  const ws = bw*0.42;
+  cx.save(); cx.translate(0,-bounce); cx.globalAlpha = tr.board ? 0.97 : 0.6; cx.lineJoin='round';
+  cx.fillStyle='#e3261c'; cx.strokeStyle='#a3150d'; cx.lineWidth = lw;
+  const bx = face<0 ? x+bw*0.48 : x+bw*0.02;
+  cx.beginPath(); cx.rect(bx, top+bh, bw*0.5, bh*0.55); cx.fill(); cx.stroke();
+  cx.beginPath(); cx.rect(x, top, bw, bh); cx.rect(tr.x+ws/2, tr.y-ws/2, -ws, ws); cx.fill('evenodd'); cx.stroke();
+  cx.strokeStyle = COLORS[tr.i]; cx.lineWidth = lw*1.6; cx.strokeRect(tr.x-ws/2, tr.y-ws/2, ws, ws);
+  if(!tr.board){ cx.fillStyle='rgba(47,143,255,.55)'; cx.fillRect(tr.x-ws/2, tr.y-ws/2, ws, ws); }
+  const wr = bw*0.16, wx = face<0 ? x+bw : x;
+  cx.fillStyle='#16161a'; cx.beginPath(); cx.arc(wx, top+bh*0.55, wr, 0, 7); cx.fill();
+  cx.fillStyle='#bfc6cc'; cx.beginPath(); cx.arc(wx, top+bh*0.55, wr*0.42, 0, 7); cx.fill();
+  cx.strokeStyle='#ff3b30'; cx.lineWidth = lw*1.4;
+  const hx = face<0 ? x - wr*0.45 : x+bw+wr*0.45;
+  for(const f of [0.4,0.68]){ cx.beginPath(); cx.ellipse(hx, top+bh*f, wr*0.55, wr*0.7, 0, 0, 7); cx.stroke(); }
+  cx.fillStyle = COLORS[tr.i]; cx.font = `${Math.round(bw*0.16)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText((tr.i+1)+'P', tr.x, top+bh*0.9);
+  cx.restore();
+  tr.nozzle = { x:hx, y:top+bh*0.4-bounce };
+  if(!tr.board && S.phase!=='victory') label('얼굴을 창문에!', tr.x, top-bh*0.18, bw*0.13, '#fff');
+}
+function label(txt, x, y, size, col){
+  cx.font = `${Math.round(size)}px "Black Han Sans",sans-serif`; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.lineWidth = size*0.22; cx.strokeStyle='#1a0d0a'; cx.strokeText(txt, x, y); cx.fillStyle = col; cx.fillText(txt, x, y);
+}
+function drawPrompt(tr, now){
+  if(!tr.board || !tr.prompt || !tr.pose) return;
+  const p = tr.pose, up = tr.prompt==='up', bw = truckW();
+  const tx = p.nose.x, ty = up ? Math.max(bw*0.3 + 56*DPR, tr.y - bw*0.8) : Math.min(H - bw*0.35, tr.y + bw*0.6);
+  const pulse = 1 + Math.sin(now/150)*0.12, r = bw*0.13*pulse;
+  cx.save();
+  cx.fillStyle = tr.spraying ? 'rgba(95,208,255,.9)' : 'rgba(255,210,63,.92)';
+  cx.beginPath(); cx.arc(tx, ty, r, 0, 7); cx.fill();
+  cx.strokeStyle = '#fff'; cx.lineWidth = 3*DPR; cx.beginPath(); cx.arc(tx, ty, r*1.45, 0, 7); cx.stroke();
+  cx.fillStyle = '#1a0d0a'; cx.beginPath();
+  if(up){ cx.moveTo(tx, ty-r*0.6); cx.lineTo(tx+r*0.5, ty+r*0.2); cx.lineTo(tx-r*0.5, ty+r*0.2); }
+  else { cx.arc(tx-r*0.28, ty, r*0.25, 0, 7); cx.arc(tx+r*0.28, ty, r*0.25, 0, 7); }
+  cx.fill(); cx.restore();
+  label(up ? '손 위로!' : '손 앞으로 모아!', tx + bw*0.55, ty, bw*0.12, tr.spraying ? '#5fd0ff' : '#ffd23f');
+}
+function drawCrown(x, y, s){
+  cx.fillStyle = '#ffd23f'; cx.strokeStyle = '#9e6b00'; cx.lineWidth = s*0.06;
+  cx.beginPath(); cx.moveTo(x-s/2,y); cx.lineTo(x-s/2,y-s*0.55); cx.lineTo(x-s/4,y-s*0.25); cx.lineTo(x,y-s*0.7); cx.lineTo(x+s/4,y-s*0.25); cx.lineTo(x+s/2,y-s*0.55); cx.lineTo(x+s/2,y); cx.closePath(); cx.fill(); cx.stroke();
 }
 
 /* ---------- water ---------- */
-function spray(sp, dt){
-  const sp0 = H*1.5;
-  for(let i=0;i<7;i++){
-    const a = (Math.random()-0.5)*0.12, dx = sp.dir.x*Math.cos(a)-sp.dir.y*Math.sin(a), dy = sp.dir.x*Math.sin(a)+sp.dir.y*Math.cos(a), v = sp0*(0.85+Math.random()*0.3);
-    S.parts.push({ x:sp.origin.x, y:sp.origin.y, vx:dx*v, vy:dy*v, life:1.2, r:(4+Math.random()*6)*DPR });
+function spray(tr, dt){
+  const n = tr.nozzle; if(!n) return;
+  const spots = fireSpots(), tgt = spots[Math.floor(Math.random()*spots.length)], T = 0.55, g = H*1.2;
+  for(let i=0;i<5;i++){
+    const tx = tgt.x + (Math.random()-0.5)*H*0.08, ty = tgt.y + (Math.random()-0.5)*H*0.06;
+    S.parts.push({ x:n.x, y:n.y, vx:(tx-n.x)/T, vy:(ty-n.y)/T - 0.5*g*T, g, life:T*1.15, r:(4+Math.random()*6)*DPR });
   }
-  for(const f of S.fires){
-    const rx = f.x-sp.origin.x, ry = f.y-sp.origin.y, along = rx*sp.dir.x + ry*sp.dir.y;
-    if(along<0) continue;
-    const perp = Math.abs(rx*sp.dir.y - ry*sp.dir.x);
-    if(perp < f.r*1.1 + 18*DPR){ f.hp -= dt / (0.7 + f.r/f.r0*0.5); f.hit = 1;
-      if(Math.random()<0.5) S.steam.push({ x:f.x+(Math.random()-0.5)*f.r, y:f.y, vy:-H*0.15, life:1, r:f.r*0.4 }); }
-  }
+  S.obj.contrib[tr.i] += dt;
+  S.obj.hp = Math.max(0, S.obj.hp - dt/SPRAY_TIME);
+  if(Math.random()<0.35) S.steam.push({ x:tgt.x+(Math.random()-0.5)*H*0.1, y:tgt.y, vy:-H*0.15, life:1, r:H*0.04 });
 }
 function drawParts(dt){
   cx.fillStyle='rgba(140,225,255,.85)';
-  S.parts = S.parts.filter(q => { q.vy += H*0.9*dt; q.x += q.vx*dt; q.y += q.vy*dt; q.life -= dt; if(q.life<=0||q.y<-50||q.y>H+50) return false;
+  S.parts = S.parts.filter(q => { q.vy += q.g*dt; q.x += q.vx*dt; q.y += q.vy*dt; q.life -= dt; if(q.life<=0) return false;
     cx.beginPath(); cx.arc(q.x,q.y,q.r,0,7); cx.fill(); return true; });
-  S.steam = S.steam.filter(s => { s.y += s.vy*dt; s.r *= 1+dt*0.8; s.life -= dt*1.2; if(s.life<=0) return false;
+  S.steam = S.steam.filter(s => { s.y += s.vy*dt; s.r *= 1+dt*0.8; s.life -= dt*1.1; if(s.life<=0) return false;
     cx.fillStyle=`rgba(230,235,240,${s.life*0.35})`; cx.beginPath(); cx.arc(s.x,s.y,s.r,0,7); cx.fill(); return true; });
+  S.confetti = S.confetti.filter(c => { c.vy += H*0.4*dt; c.x += c.vx*dt; c.y += c.vy*dt; c.a += c.va*dt; if(c.y>H+20) return false;
+    cx.save(); cx.translate(c.x,c.y); cx.rotate(c.a); cx.fillStyle=c.col; cx.fillRect(-c.s/2,-c.s/4,c.s,c.s/2); cx.restore(); return true; });
 }
 
 /* ---------- loop ---------- */
-let last = performance.now();
+let last = performance.now(), bannerTimer = 0;
+function showBanner(txt, ms){ const b = $('banner'); b.textContent = txt; b.hidden = false; clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.hidden = true, ms); }
 function frame(now){
+  if(S.phase==='idle') return;
   const dt = Math.min(0.05,(now-last)/1000); last = now;
-  if(S.mode==='cam'){ detect(now); }
-  // background
+  if(S.mode==='cam') detect(now);
   if(S.mode==='cam' && video.readyState>=2){
     const c = cover(); cx.save(); cx.translate(W,0); cx.scale(-1,1); cx.drawImage(video, c.ox, c.oy, c.vw*c.s, c.vh*c.s); cx.restore();
-    cx.fillStyle='rgba(30,10,5,.25)'; cx.fillRect(0,0,W,H);
+    cx.fillStyle='rgba(30,10,5,.2)'; cx.fillRect(0,0,W,H);
   } else {
     const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1a0d0a'); g.addColorStop(1,'#5a1608'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
   }
-  if(S.mode==='touch'){
-    const sw = Math.min(W,H)*0.28;
-    S.pose = { nose:{x:W/2,y:H-sw*2.3,v:1}, ls:{x:W/2-sw/2,y:H-sw*1.75,v:1}, rs:{x:W/2+sw/2,y:H-sw*1.75,v:1}, lw:{v:0}, rw:{v:0}, lh:{x:W/2-sw/2,y:H-sw*0.6,v:1}, rh:{x:W/2+sw/2,y:H-sw*0.6,v:1} };
-    S.poseAt = now;
+  assign();
+  for(const tr of S.trucks){ const ty = tr.board && tr.pose ? tr.pose.nose.y : H*0.42; tr.y += (Math.max(truckW()*0.45, Math.min(H*0.62, ty)) - tr.y)*Math.min(1, dt*12); tr.spraying = false; }
+  S.phaseT -= dt;
+  if(S.phase==='intro' && S.phaseT<=0) S.phase = 'play';
+  if(S.phase==='play'){
+    for(const tr of S.trucks){
+      if(!tr.board){ tr.prompt = null; continue; }
+      tr.promptT -= dt;
+      if(!tr.prompt || tr.promptT<=0){ tr.prompt = tr.prompt==='up' ? 'fwd' : tr.prompt==='fwd' ? 'up' : (Math.random()<0.5?'up':'fwd'); tr.promptT = 3.5 + Math.random()*2; }
+      const hit = S.mode==='touch' ? !!S.pointer && Math.abs(S.pointer.x - tr.x) < truckW()*0.6 : gesture(tr.pose) === tr.prompt;
+      if(hit){ tr.spraying = true; spray(tr, dt); }
+    }
+    if(S.obj.hp<=0) roundOver();
   }
-  const hasPose = S.pose && now-S.poseAt < 600;
-  let sp = null;
-  if(S.running){
-    S.t -= dt; if(S.t<=0) return endGame();
-    S.spawnIn -= dt; if(S.spawnIn<=0 && S.fires.length<MAX_FIRES){ spawnFire(); S.spawnIn = Math.max(1.1, 2.6 - (GAME_TIME-S.t)/60); }
-    for(const f of S.fires){ f.age += dt; f.r = f.r0*Math.min(1.6, 0.3 + f.age*0.9 - Math.max(0,f.age-0.8)*0.83); f.hit = Math.max(0,f.hit-dt*2); }
-    if(S.mode==='cam' && hasPose) sp = gestures(S.pose, dt, now);
-    if(S.mode==='touch' && S.pointer && S.truck){ const o = { x:W/2, y:H-Math.min(W,H)*0.28*1.4 }; const dx = S.pointer.x-o.x, dy = S.pointer.y-o.y, d = Math.hypot(dx,dy)||1; sp = { origin:o, dir:{x:dx/d,y:dy/d} }; }
-    if(sp && S.truck && S.tank>0){ S.tank = Math.max(0, S.tank - 11*dt); spray(sp, dt); if(S.tank===0) S.truck = false; } else sp = null;
-    const before = S.fires.length;
-    S.fires = S.fires.filter(f => { if(f.hp>0) return true; S.score += 100 + Math.round(f.r/f.r0*50); S.out++; return false; });
-    if(S.fires.length<before) pop();
+  if(S.phase==='out' && S.phaseT<=0){ if(Math.max(...S.scores)>=WIN) victory(); else newRound(); }
+  if(S.phase==='victory'){
+    if(Math.random()<0.6) for(let i=0;i<3;i++) S.confetti.push({ x:Math.random()*W, y:-10, vx:(Math.random()-0.5)*W*0.1, vy:Math.random()*H*0.2, a:0, va:(Math.random()-0.5)*10, s:(8+Math.random()*8)*DPR, col:['#ffd23f','#e3261c','#2f8fff','#2fd16b','#fff'][i%5] });
+    if(S.phaseT<=0) return endGame();
   }
-  setWater(!!sp);
-  for(const f of S.fires) drawFire(f, now/1000);
-  if(hasPose && S.truck) drawTruck(S.pose, now);
+  setWater(S.trucks.some(t => t.spraying));
+  drawObject(now/1000);
+  for(const tr of S.trucks) drawTruck(tr, now);
   drawParts(dt);
-  if(S.running){
-    $('score').textContent = S.score; $('time').textContent = Math.ceil(S.t); $('tankbar').style.width = S.tank+'%';
-    let h;
-    if(S.mode==='cam' && !landmarker) h = '움직임 인식 준비 중…';
-    else if(S.mode==='cam' && !hasPose) h = '몸이 다 보이게 조금 뒤로 물러나세요';
-    else if(!S.truck) h = S.mode==='touch' ? '빨간 사이렌 버튼을 눌러 출동하세요' : '머리 위에 두 손을 올려 출동!';
-    else if(!sp) h = S.mode==='touch' ? '불을 손가락으로 꾹 누르면 물이 나가요' : '두 손을 앞으로 모아 물을 쏘세요';
-    else h = '좋아요! 손을 좌우로 움직여 조준해요';
-    if(h!==S.hint){ S.hint = h; $('hint').textContent = h; }
-  }
+  if(S.phase==='play') for(const tr of S.trucks) drawPrompt(tr, now);
+  if(S.phase==='victory'){ const w = S.trucks[S.winner]; if(w){ const s = truckW(); drawCrown(w.x, w.y - s*0.42 - Math.abs(Math.sin(now/160))*s*0.18 - s*0.05, s*0.45); } }
+  let h;
+  if(S.mode==='cam' && S.poseErr) h = '움직임 인식을 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.';
+  else if(S.mode==='cam' && !landmarker) h = '움직임 인식 준비 중…';
+  else if(S.phase==='victory') h = '축하해요!';
+  else if(S.phase==='play'){
+    const free = S.trucks.filter(t => !t.board);
+    if(S.mode==='cam' && !S.poses.length) h = '몸이 보이게 조금 뒤로 물러나세요';
+    else if(free.length) h = (S.n===2 ? free.map(t => (t.i+1)+'P').join(', ')+' ' : '') + '소방차로 가서 얼굴을 파란 창문에 넣어요';
+    else h = S.mode==='touch' ? '소방차를 꾹 누르면 물대포 발사!' : '노란 포인트처럼 손을 움직여 물대포 발사!';
+  } else h = '삐용삐용! 소방차 출동!';
+  if(h!==S.hint){ S.hint = h; $('hint').textContent = h; }
   requestAnimationFrame(frame);
 }
-
-/* ---------- flow ---------- */
+function roundOver(){
+  const c = S.obj.contrib;
+  const w = S.n===2 && c[1] > c[0] ? 1 : 0;
+  S.scores[w]++; renderPips(); pop();
+  const pct = S.n===2 ? ` (물 ${Math.round(c[w]/(c[0]+c[1])*100)}%)` : '';
+  showBanner(S.n===2 ? `${w+1}P +1점!${pct}` : '불을 껐어요! +1점', 1800);
+  S.phase = 'out'; S.phaseT = 2.2; S.trucks.forEach(t => t.prompt = null);
+}
+function victory(){
+  S.winner = S.scores[0] >= S.scores[1] ? 0 : 1;
+  S.phase = 'victory'; S.phaseT = 5;
+  showBanner(S.n===2 ? `${S.winner+1}P 승리!` : '화재 진압 성공!', 4800); fanfare(); setTimeout(fanfare, 1100);
+}
+function renderPips(){
+  for(let p=0;p<2;p++) $('pips'+p).innerHTML = Array.from({length:WIN}, (_,i) => `<i class="${i<S.scores[p]?'on':''}"></i>`).join('');
+}
 function startGame(){
-  Object.assign(S, { running:true, score:0, out:0, t:GAME_TIME, fires:[], parts:[], steam:[], truck:false, tank:0, spawnIn:0.5, hint:'' });
-  spawnFire();
+  Object.assign(S, { scores:[0,0], roundNo:0, parts:[], steam:[], confetti:[], hint:'', winner:-1, lastKind:'' });
+  renderPips(); $('pl2').hidden = S.n!==2;
   $('startScreen').hidden = true; $('endScreen').hidden = true; $('hud').hidden = false; $('hint').hidden = false;
-  $('touchSiren').hidden = S.mode!=='touch';
-  last = performance.now(); requestAnimationFrame(frame);
+  document.body.classList.add('playing');
+  newRound(); last = performance.now(); requestAnimationFrame(frame);
 }
 function endGame(){
-  S.running = false; setWater(false);
-  let best = 0; try{ best = +localStorage.getItem('fire119best')||0; if(S.score>best) localStorage.setItem('fire119best', S.score); }catch(e){}
-  $('finalScore').textContent = S.score;
-  $('finalInfo').textContent = `불 ${S.out}개를 껐어요.` + (S.score>best && best>0 ? ' 최고 기록이에요!' : best>0 ? ` 최고 기록 ${best}점` : '');
-  $('hud').hidden = true; $('hint').hidden = true; $('touchSiren').hidden = true; $('endScreen').hidden = false;
+  S.phase = 'idle'; setWater(false); document.body.classList.remove('playing');
+  $('endTitle').textContent = S.n===2 ? `${S.winner+1}P 승리!` : '임무 완료!';
+  $('endScore').textContent = S.n===2 ? `${S.scores[0]} : ${S.scores[1]}` : `불 ${S.scores[0]}개 진압`;
+  $('hud').hidden = true; $('hint').hidden = true; $('banner').hidden = true; $('endScreen').hidden = false;
 }
-$('startCam').onclick = async () => {
+async function goLandscape(){
+  try{ if(!document.fullscreenElement) await document.documentElement.requestFullscreen(); await screen.orientation.lock('landscape'); }catch(e){}
+}
+async function startCam(n){
   const msg = $('msg');
-  if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){ msg.textContent = '카메라는 https 주소에서만 켜져요. 아래 터치 모드로 해 볼 수 있어요.'; return; }
-  initAudio();
-  msg.textContent = '카메라를 켜는 중…';
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:false });
-    video.srcObject = stream; await video.play();
-  }catch(e){ msg.textContent = '카메라를 쓸 수 없어요. 브라우저에서 카메라 권한을 허용해 주세요.'; return; }
-  S.mode = 'cam'; msg.textContent = '';
-  loadPose().catch(() => { S.hint=''; $('hint').textContent = '움직임 인식을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'; });
-  startGame();
-};
-$('startTouch').onclick = () => { initAudio(); S.mode = 'touch'; startGame(); };
-$('again').onclick = () => { if(ac && ac.state==='suspended') ac.resume(); startGame(); };
-$('touchSiren').onpointerdown = e => { e.stopPropagation(); if(performance.now()-S.sirenAt>1500) dispatch(performance.now()); };
+  if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){ msg.textContent = '카메라는 https 주소에서만 켜져요.'; return; }
+  initAudio(); goLandscape();
+  if(!video.srcObject){
+    msg.textContent = '카메라를 켜는 중…';
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
+      video.srcObject = stream; await video.play();
+    }catch(e){ msg.textContent = '카메라를 쓸 수 없어요. 브라우저에서 카메라 권한을 허용해 주세요.'; return; }
+    loadPose().catch(() => { S.poseErr = true; });
+  }
+  msg.textContent = ''; S.mode = 'cam'; S.n = n; startGame();
+}
+$('start1').onclick = () => startCam(1);
+$('start2').onclick = () => startCam(2);
+$('startTouch').onclick = () => { initAudio(); goLandscape(); S.mode = 'touch'; S.n = 2; startGame(); };
+$('again').onclick = () => { initAudio(); goLandscape(); startGame(); };
 const pt = e => ({ x:e.clientX*DPR, y:e.clientY*DPR });
 cv.addEventListener('pointerdown', e => { S.pointer = pt(e); });
 cv.addEventListener('pointermove', e => { if(S.pointer) S.pointer = pt(e); });
